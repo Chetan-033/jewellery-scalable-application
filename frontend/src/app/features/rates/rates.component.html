@@ -1,0 +1,49 @@
+<div class="page-head">
+  <div>
+    <h1>Daily rates</h1>
+    <p>Set today’s metal rate per gram. Finalized invoices will snapshot the rate used.</p>
+  </div>
+</div>
+
+@if (message()) {
+  <p class="flash">{{ message() }}</p>
+}
+
+<div class="layout">
+  <form class="panel form" (ngSubmit)="save()">
+    <h2>Post rate</h2>
+    <div class="field">
+      <label>Metal</label>
+      <select [(ngModel)]="form.metalId" name="metalId" (ngModelChange)="loadRates()" required>
+        @for (m of metals(); track m.id) {
+          <option [value]="m.id">{{ m.name }} ({{ m.code }})</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label>Rate per gram (INR)</label>
+      <input type="number" step="0.0001" [(ngModel)]="form.ratePerGram" name="rate" required />
+    </div>
+    <button class="btn btn-primary" type="submit">Save today’s rate</button>
+  </form>
+
+  <div class="panel table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr><th>Metal</th><th>Rate / g</th><th>Effective from</th><th>Source</th></tr>
+      </thead>
+      <tbody>
+        @for (row of rates(); track row.id) {
+          <tr>
+            <td>{{ metalName(row.metalId) }}</td>
+            <td>₹ {{ row.ratePerGram | number: '1.2-4' }}</td>
+            <td>{{ row.effectiveFrom | date: 'dd MMM yyyy, HH:mm' }}</td>
+            <td>{{ row.source }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="4" class="empty-hint">No rates yet for this metal.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

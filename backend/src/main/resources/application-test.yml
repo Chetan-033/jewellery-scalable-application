@@ -1,0 +1,28 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:jewellery_erp_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    locations: classpath:db/migration/tenant
+    enabled: true
+
+jewellery:
+  edition: offline
+  jwt:
+    secret: test-secret-key-with-at-least-32-characters!!
+    expiry-minutes: 60
+  bootstrap:
+    enabled: true
+    admin-username: admin
+    admin-password: Admin@123
+    admin-display-name: Test Admin
+    tenant-code: TEST
+    tenant-name: Test Shop
+    firm-name: Test Shop
+    branch-name: Main
+    branch-code: MAIN

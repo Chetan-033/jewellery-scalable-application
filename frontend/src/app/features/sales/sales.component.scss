@@ -1,0 +1,41 @@
+.pad { padding: 0.85rem 1rem; margin-bottom: 0.7rem; }
+.pad h2 { margin: 0 0 0.55rem; font-size: 0.95rem; color: var(--navy); font-family: var(--font-display); }
+.cust-strip {
+  margin-top: 0.55rem; padding: 0.45rem 0.65rem; border-radius: 4px;
+  background: #fff8e1; border: 1px solid #ffe082; display: flex; flex-wrap: wrap; gap: 0.85rem;
+  font-size: 0.86rem; font-weight: 700; color: var(--navy);
+}
+.scan-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.scan label { display: block; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.25rem; color: var(--ink-soft); }
+.scan-input { display: flex; gap: 0.35rem; }
+.scan-input input { flex: 1; min-height: 2.2rem; border: 1px solid var(--line); border-radius: 4px; padding: 0.4rem 0.55rem; }
+.lookup-list { list-style: none; margin: 0.35rem 0 0; padding: 0; border: 1px solid var(--line); border-radius: 4px; max-height: 160px; overflow: auto; }
+.lookup-list button {
+  width: 100%; text-align: left; border: 0; background: #fff; padding: 0.4rem 0.55rem;
+  cursor: pointer; font-size: 0.82rem; color: var(--danger); font-weight: 700;
+}
+.lookup-list button:hover { background: #fff5f5; }
+.section-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem; }
+.line-block { border: 1px solid var(--line); border-radius: 6px; padding: 0.55rem; margin-bottom: 0.55rem; background: #fcfdff; }
+.form-grid.dense { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 0.35rem; }
+.field.readonly .value {
+  min-height: 2rem; display: flex; align-items: center; padding: 0 0.4rem;
+  border: 1px dashed var(--line); border-radius: 4px; background: #f8fafc; font-weight: 700; font-size: 0.8rem;
+}
+.sell-bottom { display: grid; grid-template-columns: 1.1fr 1fr; gap: 0.7rem; }
+.tax-toggles { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.55rem; font-size: 0.82rem; font-weight: 700; }
+.pay-cash { background: #e8f5e9 !important; }
+.totals {
+  margin-top: 0.65rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem;
+  padding: 0.65rem; border-radius: 6px; background: #12324d; color: #f4f7fa;
+}
+.totals span { display: block; font-size: 0.68rem; opacity: 0.75; }
+.totals strong { font-size: 0.92rem; }
+.totals .grand strong, .totals .bal strong { color: var(--gold-soft); font-size: 1.05rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.65rem; justify-content: flex-end; }
+.table-wrap { overflow: auto; }
+
+@media (max-width: 1100px) {
+  .scan-row, .sell-bottom { grid-template-columns: 1fr; }
+  .form-grid.dense { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

@@ -1,0 +1,269 @@
+<div class="dash">
+  @if (message()) {
+    <p class="flash" [class.err]="message()?.includes('fail') || message()?.includes('Enter')">{{ message() }}</p>
+  }
+
+  <!-- Welcome banner -->
+  <section class="welcome">
+    <div class="welcome-copy">
+      <p class="eyebrow">{{ greeting() }}</p>
+      <h1>Welcome back, {{ displayName() }}</h1>
+      <p class="sub">
+        Your jewellery operations hub — rates, stock, credit and sales in one scalable workspace.
+      </p>
+    </div>
+    <div class="welcome-actions">
+      <a routerLink="/app/sales" class="btn btn-light">New sale</a>
+      <a routerLink="/app/rates" class="btn btn-outline-light">Manage rates</a>
+      <button type="button" class="btn btn-outline-light" (click)="showQuickAdd.set(!showQuickAdd())">
+        {{ showQuickAdd() ? 'Hide quick add' : 'Quick add customer' }}
+      </button>
+    </div>
+    <div class="welcome-ornament" aria-hidden="true"></div>
+  </section>
+
+  <!-- KPI cards -->
+  <section class="kpi-grid" aria-label="Key metrics">
+    @for (k of kpis(); track k.key) {
+      <article class="kpi panel" [attr.data-tone]="k.tone">
+        <div class="kpi-ico" aria-hidden="true">{{ k.ico }}</div>
+        <div class="kpi-body">
+          <span class="kpi-label">{{ k.label }}</span>
+          <strong class="kpi-value">{{ k.value }}</strong>
+          <span class="kpi-meta">{{ k.meta }}</span>
+        </div>
+      </article>
+    }
+  </section>
+
+  <!-- Status cards -->
+  <section class="status-grid" aria-label="Status">
+    @for (s of statusCards(); track s.title) {
+      <article class="status-card panel" [attr.data-tone]="s.tone">
+        <div class="status-ico" aria-hidden="true">{{ s.ico }}</div>
+        <div>
+          <h2>{{ s.title }}</h2>
+          <p class="status-value">{{ s.value }}</p>
+          <p class="status-detail">{{ s.detail }}</p>
+        </div>
+      </article>
+    }
+  </section>
+
+  <!-- Shortcuts -->
+  <section class="shortcuts panel">
+    <div class="section-head">
+      <h2>Quick actions</h2>
+      <p>Jump into high-frequency workflows</p>
+    </div>
+    <div class="shortcut-row">
+      @for (s of shortcuts; track s.label) {
+        <button type="button" class="shortcut" [attr.data-tone]="s.tone" (click)="go(s.path, s.query)">
+          <span class="s-ico" aria-hidden="true">{{ s.ico }}</span>
+          {{ s.label }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <!-- Filters + charts -->
+  <section class="chart-toolbar panel">
+    <div class="filters">
+      <span class="filter-label">Trend range</span>
+      <div class="seg">
+        <button type="button" [class.active]="chartRange === '7d'" (click)="setRange('7d')">7D</button>
+        <button type="button" [class.active]="chartRange === '30d'" (click)="setRange('30d')">30D</button>
+        <button type="button" [class.active]="chartRange === '90d'" (click)="setRange('90d')">90D</button>
+      </div>
+      <a routerLink="/app/rates" class="btn btn-sm btn-ghost">Open rate board</a>
+      <a routerLink="/app/reports" class="btn btn-sm btn-ghost">Full reports</a>
+    </div>
+  </section>
+
+  <section class="charts-row">
+    <article class="panel chart-card">
+      <div class="section-head">
+        <div>
+          <h2>Gold &amp; silver rate trend</h2>
+          <p>Illustrative trend from current board · ready for live history feed</p>
+        </div>
+        <div class="legend">
+          <span><i class="lg gold"></i> Gold</span>
+          <span><i class="lg silver"></i> Silver</span>
+        </div>
+      </div>
+      <div class="chart-frame">
+        <svg viewBox="0 0 560 180" role="img" aria-label="Gold and silver rate trend chart" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="goldFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#f08a18" stop-opacity="0.28" />
+              <stop offset="100%" stop-color="#f08a18" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+          <g class="grid" stroke="#e8ebf2" stroke-width="1">
+            <line x1="8" y1="45" x2="552" y2="45" />
+            <line x1="8" y1="90" x2="552" y2="90" />
+            <line x1="8" y1="135" x2="552" y2="135" />
+          </g>
+          <path [attr.d]="goldArea()" fill="url(#goldFill)" />
+          <path [attr.d]="goldPath()" fill="none" stroke="#f08a18" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+          <path [attr.d]="silverPath()" fill="none" stroke="#c9a227" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4" />
+        </svg>
+      </div>
+    </article>
+
+    <article class="panel chart-card donut-card">
+      <div class="section-head">
+        <div>
+          <h2>Account pulse</h2>
+          <p>Verified vs pending credit posture</p>
+        </div>
+      </div>
+      <div class="donut-wrap">
+        <div class="donut" [style.background]="donutGradient()" aria-hidden="true">
+          <div class="donut-hole">
+            <strong>{{ kycSlices()[0].pct }}%</strong>
+            <span>Verified</span>
+          </div>
+        </div>
+        <ul class="donut-legend">
+          @for (slice of kycSlices(); track slice.label) {
+            <li>
+              <i [style.background]="slice.color"></i>
+              <div>
+                <strong>{{ slice.label }}</strong>
+                <span>{{ slice.value }} · {{ slice.pct }}%</span>
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </article>
+  </section>
+
+  <!-- Ledgers -->
+  <section class="ledger-row">
+    <div class="panel table-card">
+      <div class="section-head">
+        <div>
+          <h2>Top udhaar</h2>
+          <p>Highest outstanding balances</p>
+        </div>
+        <a routerLink="/app/credit" class="btn btn-sm btn-ghost">View all</a>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ref</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Mobile</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of udhaar(); track r.refNo + r.entryDate) {
+              <tr>
+                <td>{{ r.refNo }}</td>
+                <td>{{ r.entryDate }}</td>
+                <td>{{ r.customerName || '—' }}</td>
+                <td>{{ r.customerPhone || '—' }}</td>
+                <td class="amt-neg">{{ r.amount | number: '1.2-2' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="empty-hint">No udhaar yet — books look clear</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel table-card">
+      <div class="section-head">
+        <div>
+          <h2>Top advances</h2>
+          <p>Customer credit on hand</p>
+        </div>
+        <a routerLink="/app/credit" class="btn btn-sm btn-ghost">View all</a>
+      </div>
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Ref</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Mobile</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of advances(); track r.refNo + r.entryDate) {
+              <tr>
+                <td>{{ r.refNo }}</td>
+                <td>{{ r.entryDate }}</td>
+                <td>{{ r.customerName || '—' }}</td>
+                <td>{{ r.customerPhone || '—' }}</td>
+                <td class="amt-pos">{{ r.amount | number: '1.2-2' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="empty-hint">No advances yet</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick add customer (collapsible) -->
+  @if (showQuickAdd()) {
+    <section class="panel home-customer">
+      <div class="section-head">
+        <div>
+          <h2>Quick add customer</h2>
+          <p>Capture a party without leaving the home screen</p>
+        </div>
+        <div class="quick-actions">
+          <a routerLink="/app/sales" class="btn btn-sm btn-danger">Sell</a>
+          <a routerLink="/app/loans" class="btn btn-sm btn-info">Loan</a>
+          <a routerLink="/app/credit" class="btn btn-sm btn-warn">Udhaar</a>
+        </div>
+      </div>
+
+      <div class="form-grid dense">
+        <div class="field"><label>Mobile</label><input [(ngModel)]="cust.phone" name="ph" /></div>
+        <div class="field"><label>Phone</label><input [(ngModel)]="cust.altPhone" name="aph" /></div>
+        <div class="field">
+          <label>Title</label>
+          <select [(ngModel)]="cust.title" name="ttl">
+            <option>Mr.</option><option>Ms.</option><option>Mrs.</option>
+          </select>
+        </div>
+        <div class="field"><label>First name</label><input [(ngModel)]="cust.firstName" name="fn" /></div>
+        <div class="field"><label>Last name</label><input [(ngModel)]="cust.lastName" name="ln" /></div>
+        <div class="field">
+          <label>Gender</label>
+          <select [(ngModel)]="cust.gender" name="gen"><option value="M">M</option><option value="F">F</option></select>
+        </div>
+        <div class="field span-2"><label>Spouse / Relative</label><input [(ngModel)]="cust.spouseName" name="sp" /></div>
+        <div class="field span-3"><label>Address</label><input [(ngModel)]="cust.address" name="ad" /></div>
+        <div class="field"><label>Country</label><input [(ngModel)]="cust.countryName" name="co" /></div>
+        <div class="field"><label>State</label><input [(ngModel)]="cust.stateName" name="st" /></div>
+        <div class="field"><label>City</label><input [(ngModel)]="cust.city" name="ct" /></div>
+        <div class="field"><label>Village</label><input [(ngModel)]="cust.village" name="vg" /></div>
+        <div class="field"><label>Pincode</label><input [(ngModel)]="cust.pincode" name="pin" /></div>
+        <div class="field"><label>GSTIN</label><input [(ngModel)]="cust.gstin" name="gst" /></div>
+        <div class="field"><label>PAN</label><input [(ngModel)]="cust.panNo" name="pan" /></div>
+        <div class="field"><label>Aadhaar</label><input [(ngModel)]="cust.aadhaarNo" name="aa" /></div>
+        <div class="field"><label>Email</label><input [(ngModel)]="cust.email" name="em" /></div>
+      </div>
+      <div class="row-actions">
+        <button type="button" class="btn btn-primary" [disabled]="saving" (click)="saveCustomer()">
+          {{ saving ? 'Saving…' : 'Save customer' }}
+        </button>
+        <a routerLink="/app/masters" class="btn btn-ghost">Customer list</a>
+      </div>
+    </section>
+  }
+</div>

@@ -1,0 +1,8 @@
+.pad { padding: 0.85rem 1rem; margin-bottom: 0.7rem; }
+.pad h2 { margin: 0 0 0.55rem; font-size: 0.95rem; color: var(--navy); }
+.cust-banner {
+  display: flex; align-items: center; padding: 0.45rem 0.65rem;
+  background: #fff8e1; border: 1px solid #ffe082; border-radius: 4px;
+  font-weight: 700; color: var(--navy); grid-column: span 4;
+}
+.table-wrap { overflow: auto; }

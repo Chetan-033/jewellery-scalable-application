@@ -1,0 +1,124 @@
+<div class="page-head">
+  <div>
+    <h1>User / Masters</h1>
+    <p>Customer cards, suppliers, metals and purities.</p>
+  </div>
+</div>
+
+@if (message()) { <p class="flash">{{ message() }}</p> }
+
+<div class="tabs">
+  <button type="button" [class.active]="tab==='customers'" (click)="tab='customers'">Customer list</button>
+  <button type="button" [class.active]="tab==='suppliers'" (click)="tab='suppliers'">Supplier list</button>
+  <button type="button" [class.active]="tab==='metals'" (click)="tab='metals'">Metals</button>
+  <button type="button" [class.active]="tab==='purities'" (click)="tab='purities'">Purities</button>
+</div>
+
+@if (tab === 'customers') {
+  <section class="panel pad search-row">
+    <div class="field grow">
+      <label>Search</label>
+      <input [(ngModel)]="q" name="q" (keyup.enter)="reload()" placeholder="Name / mobile / city" />
+    </div>
+    <button type="button" class="btn btn-info" (click)="reload()">Search</button>
+  </section>
+
+  <section class="panel pad">
+    <h2>Add customer</h2>
+    <div class="form-grid">
+      <div class="field"><label>First</label><input [(ngModel)]="customerForm.firstName" name="cf" /></div>
+      <div class="field"><label>Last</label><input [(ngModel)]="customerForm.lastName" name="cl" /></div>
+      <div class="field"><label>Mobile</label><input [(ngModel)]="customerForm.phone" name="cp" /></div>
+      <div class="field"><label>Spouse / Father</label><input [(ngModel)]="customerForm.spouseName" name="cs" /></div>
+      <div class="field"><label>City</label><input [(ngModel)]="customerForm.city" name="cc" /></div>
+      <div class="field span-2"><label>Address</label><input [(ngModel)]="customerForm.address" name="ca" /></div>
+    </div>
+    <button type="button" class="btn btn-navy" (click)="saveCustomer()">Save</button>
+  </section>
+
+  <div class="cust-grid">
+    @for (c of customers(); track c.id) {
+      <article class="cust-card panel">
+        <div class="avatar">{{ (c.firstName || c.name || '?').charAt(0) }}</div>
+        <div class="body">
+          <h3>{{ c.name }}</h3>
+          @if (relationOf(c)) { <p class="rel">{{ relationOf(c) }}</p> }
+          <p class="phone">{{ c.phone || '—' }}</p>
+          <p class="meta">{{ c.code }} · {{ c.city || '—' }}</p>
+          <div class="actions">
+            <a [routerLink]="['/app/sales']" [queryParams]="{ customerId: c.id }" title="Sell">◆</a>
+            <a [routerLink]="['/app/loans']" [queryParams]="{ customerId: c.id }" title="Loan">◈</a>
+            <a [routerLink]="['/app/credit']" [queryParams]="{ customerId: c.id }" title="Udhaar">◎</a>
+          </div>
+        </div>
+      </article>
+    } @empty {
+      <p class="empty-hint">No customers found</p>
+    }
+  </div>
+}
+
+@if (tab === 'suppliers') {
+  <section class="panel pad">
+    <div class="form-grid">
+      <div class="field"><label>Code</label><input [(ngModel)]="supplierForm.code" name="sc" /></div>
+      <div class="field"><label>Name</label><input [(ngModel)]="supplierForm.name" name="sn" /></div>
+      <div class="field"><label>Phone</label><input [(ngModel)]="supplierForm.phone" name="sp" /></div>
+      <div class="field"><label>City</label><input [(ngModel)]="supplierForm.city" name="sct" /></div>
+    </div>
+    <button type="button" class="btn btn-navy" (click)="saveSupplier()">Save supplier</button>
+    <table class="data-table" style="margin-top:0.75rem">
+      <thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>City</th></tr></thead>
+      <tbody>
+        @for (s of suppliers(); track s.id) {
+          <tr><td>{{ s.code }}</td><td>{{ s.name }}</td><td>{{ s.phone || '—' }}</td><td>{{ s.city || '—' }}</td></tr>
+        } @empty { <tr><td colspan="4" class="empty-hint">No suppliers</td></tr> }
+      </tbody>
+    </table>
+  </section>
+}
+
+@if (tab === 'metals') {
+  <section class="panel pad">
+    <div class="form-grid">
+      <div class="field"><label>Code</label><input [(ngModel)]="metalForm.code" name="mc" /></div>
+      <div class="field"><label>Name</label><input [(ngModel)]="metalForm.name" name="mn" /></div>
+      <div class="field"><label>Symbol</label><input [(ngModel)]="metalForm.symbol" name="ms" /></div>
+    </div>
+    <button type="button" class="btn btn-navy" (click)="saveMetal()">Save metal</button>
+    <table class="data-table" style="margin-top:0.75rem">
+      <thead><tr><th>Code</th><th>Name</th><th>Symbol</th></tr></thead>
+      <tbody>
+        @for (m of metals(); track m.id) { <tr><td>{{ m.code }}</td><td>{{ m.name }}</td><td>{{ m.symbol || '—' }}</td></tr> }
+      </tbody>
+    </table>
+  </section>
+}
+
+@if (tab === 'purities') {
+  <section class="panel pad">
+    <div class="form-grid">
+      <div class="field"><label>Metal</label>
+        <select [(ngModel)]="purityForm.metalId" name="pm">
+          <option value="">—</option>
+          @for (m of metals(); track m.id) { <option [value]="m.id">{{ m.name }}</option> }
+        </select>
+      </div>
+      <div class="field"><label>Label</label><input [(ngModel)]="purityForm.label" name="pl" /></div>
+      <div class="field"><label>Fineness %</label><input type="number" step="0.0001" [(ngModel)]="purityForm.fineness" name="pf" /></div>
+    </div>
+    <button type="button" class="btn btn-navy" (click)="savePurity()">Save purity</button>
+    <table class="data-table" style="margin-top:0.75rem">
+      <thead><tr><th>Metal</th><th>Label</th><th>Fineness</th></tr></thead>
+      <tbody>
+        @for (p of purities(); track p.id) {
+          <tr>
+            <td>{{ metalName(p.metalId) }}</td>
+            <td>{{ p.label }}</td>
+            <td>{{ p.fineness }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}

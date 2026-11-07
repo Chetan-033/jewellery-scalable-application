@@ -1,0 +1,67 @@
+<div class="login-root">
+  <section class="hero" aria-label="Brand">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <p class="eyebrow">Jewellery business platform</p>
+      <h1>Jewellery ERP</h1>
+      <p class="tagline">
+        Billing, stock, Girvi, job work and accounts — built for Indian jewellery shops,
+        online or fully offline.
+      </p>
+      <ul class="points">
+        <li>Retail & wholesale billing with metal weight engine</li>
+        <li>Tag stock, old metal exchange, hallmark tracking</li>
+        <li>Girvi loans, udhaar, day book & GST reports</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="form-side">
+    <form class="login-form" (ngSubmit)="submit()">
+      <div class="form-brand">
+        <span class="mark">JE</span>
+        <div>
+          <strong>Jewellery ERP</strong>
+          <small>{{ edition === 'offline' ? 'Offline shop edition' : 'Online multi-tenant' }}</small>
+        </div>
+      </div>
+
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in to open your firm workspace.</p>
+
+      <div class="field">
+        <label for="username">Login ID</label>
+        <input id="username" name="username" [(ngModel)]="username" autocomplete="username" required />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="password-row">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            [(ngModel)]="password"
+            autocomplete="current-password"
+            required
+          />
+          <button type="button" class="toggle" (click)="showPassword = !showPassword">
+            {{ showPassword ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+      </div>
+
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+
+      <button class="btn btn-primary submit" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Signing in…' : 'Enter workspace' }}
+      </button>
+
+      @if (edition === 'offline') {
+        <p class="hint">Offline default: admin / Admin&#64;123 — change after first login.</p>
+      }
+    </form>
+  </section>
+</div>

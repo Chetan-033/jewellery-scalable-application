@@ -1,0 +1,33 @@
+<div class="page-head">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>{{ description }}</p>
+  </div>
+  <a class="btn btn-ghost" routerLink="/app/dashboard">Back to home</a>
+</div>
+
+<section class="hero panel">
+  <div>
+    <span class="badge badge-warn">In build queue</span>
+    <h2>Full {{ title }} workspace coming next</h2>
+    <p>
+      Navigation and permissions are ready. This screen lists the exact jewellery-shop workflows we will implement
+      here — matching the reference product’s capability, on this modern UI.
+    </p>
+  </div>
+  <div class="cta">
+    <a class="btn btn-primary" routerLink="/app/masters">Use Masters now</a>
+    <a class="btn btn-navy" routerLink="/app/inventory">Use Stock now</a>
+  </div>
+</section>
+
+<section class="panel list">
+  <h3>Planned capabilities</h3>
+  <ul>
+    @for (f of features; track f) {
+      <li>{{ f }}</li>
+    } @empty {
+      <li>Detailed workflow screens for this module.</li>
+    }
+  </ul>
+</section>

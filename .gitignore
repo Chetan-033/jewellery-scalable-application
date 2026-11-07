@@ -1,0 +1,68 @@
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+.project
+.classpath
+.settings/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.jks
+secrets/
+
+# Backend (Maven / local offline DB)
+backend/target/
+backend/data/
+backend/.mvn/wrapper/maven-wrapper.jar
+!backend/.mvn/wrapper/maven-wrapper.properties
+
+# Frontend (Node/Angular)
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+npm-debug.log*
+yarn-error.log*
+
+# Desktop (Electron)
+desktop/node_modules/
+desktop/dist/
+desktop/out/
+desktop/release/
+desktop/resources/runtime/
+desktop/resources/backend/
+desktop/resources/frontend/
+desktop/resources/mariadb/
+
+# Infra / local data
+infra/data/
+*.log
+logs/
+
+# Test / coverage
+**/coverage/
+**/test-results/
+**/allure-results/
+
+# Build artifacts
+*.jar
+!backend/.mvn/wrapper/**
+*.war
+*.zip
+*.tar.gz
+
+# Local DB dumps
+*.sql.gz
+database/local/

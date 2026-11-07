@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Test backend
+        working-directory: backend
+        run: ./mvnw -B test
+      - name: Package backend
+        working-directory: backend
+        run: ./mvnw -B -DskipTests package
+      - name: Upload backend jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: jewellery-erp-backend
+          path: backend/target/jewellery-erp-*.jar
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install and build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+      - name: Upload frontend dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: jewellery-erp-frontend
+          path: frontend/dist/jewellery-erp-ui
+
+  offline-pack-hook:
+    needs: [backend, frontend]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+      - name: Stage desktop resources
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path desktop/resources/backend, desktop/resources/frontend | Out-Null
+          Copy-Item jewellery-erp-backend/jewellery-erp-*.jar desktop/resources/backend/jewellery-erp.jar
+          Copy-Item -Recurse jewellery-erp-frontend/* desktop/resources/frontend/
+          Write-Host "Offline packaging resources staged (installer build can be enabled after code signing)."

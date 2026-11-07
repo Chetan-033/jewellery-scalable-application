@@ -1,0 +1,59 @@
+<div class="page-head">
+  <div>
+    <h1>Customer orders</h1>
+    <p>Custom order booking with advance — convert to sale when ready.</p>
+  </div>
+</div>
+
+@if (message()) { <p class="flash">{{ message() }}</p> }
+
+<section class="panel pad">
+  <div class="form-grid">
+    <div class="field">
+      <label>Customer</label>
+      <select [(ngModel)]="form.customerId" name="cid">
+        <option value="">—</option>
+        @for (c of customers(); track c.id) {
+          <option [value]="c.id">{{ c.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="field"><label>Item / design</label><input [(ngModel)]="form.itemName" name="iname" required /></div>
+    <div class="field">
+      <label>Metal</label>
+      <select [(ngModel)]="form.metalId" name="mid">
+        <option value="">—</option>
+        @for (m of metals(); track m.id) {
+          <option [value]="m.id">{{ m.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="field"><label>Target wt (g)</label><input type="number" step="0.0001" [(ngModel)]="form.targetWeight" name="tw" /></div>
+    <div class="field"><label>Estimate ₹</label><input type="number" step="0.01" [(ngModel)]="form.estimatedAmount" name="ea" /></div>
+    <div class="field"><label>Advance ₹</label><input type="number" step="0.01" [(ngModel)]="form.advanceAmount" name="aa" /></div>
+    <div class="field"><label>Due date</label><input type="date" [(ngModel)]="form.dueDate" name="dd" /></div>
+    <div class="field"><label>Remarks</label><input [(ngModel)]="form.remarks" name="rm" /></div>
+  </div>
+  <button type="button" class="btn btn-primary" (click)="save()">Save order</button>
+</section>
+
+<section class="panel pad">
+  <table class="data-table">
+    <thead>
+      <tr><th>Order</th><th>Item</th><th>Due</th><th>Advance</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      @for (o of orders(); track o.id) {
+        <tr>
+          <td>{{ o.orderNo }}</td>
+          <td>{{ o.itemName }}</td>
+          <td>{{ o.dueDate || '—' }}</td>
+          <td>₹ {{ o.advanceAmount | number: '1.2-2' }}</td>
+          <td><span class="badge badge-warn">{{ o.status }}</span></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5" class="empty-hint">No orders yet.</td></tr>
+      }
+    </tbody>
+  </table>
+</section>

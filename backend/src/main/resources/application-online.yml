@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:127.0.0.1}:${MYSQL_PORT:3306}/${MYSQL_PLATFORM_DB:jewellery_erp_platform}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USER:erp_app}
+    password: ${MYSQL_PASSWORD:change_me_local_only}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    locations: classpath:db/migration/platform
+
+jewellery:
+  edition: online
+  bootstrap:
+    enabled: false
+  tenant:
+    # Database-per-tenant placement is resolved via platform registry.
+    routing-enabled: true

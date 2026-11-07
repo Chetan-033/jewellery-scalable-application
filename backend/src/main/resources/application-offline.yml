@@ -1,0 +1,27 @@
+# Offline edition defaults to a local file database so the desktop app can start
+# without a preconfigured MySQL password. Override with MYSQL_* to use MySQL 8.4.
+spring:
+  datasource:
+    url: ${OFFLINE_JDBC_URL:jdbc:h2:file:./data/jewellery-erp;MODE=MySQL;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH}
+    username: ${OFFLINE_DB_USER:sa}
+    password: ${OFFLINE_DB_PASSWORD:}
+    driver-class-name: ${OFFLINE_DB_DRIVER:org.h2.Driver}
+  flyway:
+    locations: classpath:db/migration/tenant
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+jewellery:
+  edition: offline
+  bootstrap:
+    enabled: true
+    admin-username: admin
+    admin-password: Admin@123
+    admin-display-name: Offline Admin
+    tenant-code: LOCAL
+    tenant-name: Local Jewellery Shop
+    firm-name: Local Jewellery Shop
+    branch-name: Main Branch
+    branch-code: MAIN

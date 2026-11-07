@@ -1,0 +1,207 @@
+<div class="page-head">
+  <div>
+    <h1>Sell / POS</h1>
+    <p>Barcode / RFID add · metal valuation · old gold exchange · multi-mode payment.</p>
+  </div>
+  <button type="button" class="btn btn-primary" (click)="showCustomerPanel = !showCustomerPanel">
+    {{ showCustomerPanel ? 'Hide customer' : '+ Add customer' }}
+  </button>
+</div>
+
+@if (message()) { <p class="flash">{{ message() }}</p> }
+
+@if (showCustomerPanel) {
+  <section class="panel pad">
+    <h2>Quick add customer</h2>
+    <div class="form-grid">
+      <div class="field"><label>Title</label><select [(ngModel)]="newCustomer.title" name="nt"><option>Mr.</option><option>Ms.</option><option>Mrs.</option></select></div>
+      <div class="field"><label>First</label><input [(ngModel)]="newCustomer.firstName" name="nf" /></div>
+      <div class="field"><label>Last</label><input [(ngModel)]="newCustomer.lastName" name="nl" /></div>
+      <div class="field"><label>Mobile</label><input [(ngModel)]="newCustomer.phone" name="np" /></div>
+      <div class="field"><label>Spouse</label><input [(ngModel)]="newCustomer.spouseName" name="ns" /></div>
+      <div class="field"><label>City</label><input [(ngModel)]="newCustomer.city" name="nc" /></div>
+      <div class="field span-2"><label>Address</label><input [(ngModel)]="newCustomer.address" name="na" /></div>
+      <div class="field"><label>Aadhaar</label><input [(ngModel)]="newCustomer.aadhaarNo" name="naa" /></div>
+      <div class="field"><label>GSTIN</label><input [(ngModel)]="newCustomer.gstin" name="ng" /></div>
+    </div>
+    <button type="button" class="btn btn-navy" (click)="saveCustomer()">Save customer</button>
+  </section>
+}
+
+<section class="panel pad customer-banner">
+  <div class="form-grid">
+    <div class="field span-2">
+      <label>Search customer</label>
+      <input [(ngModel)]="customerQuery" name="cq" (ngModelChange)="searchCustomers()" placeholder="Name / mobile / city" />
+    </div>
+    <div class="field span-2">
+      <label>Bill to</label>
+      <select [(ngModel)]="customerId" name="cid" (ngModelChange)="pickCustomer()">
+        <option value="">Walk-in / cash</option>
+        @for (c of customers(); track c.id) {
+          <option [value]="c.id">{{ c.name }} ({{ c.code }}) {{ c.phone || '' }}</option>
+        }
+      </select>
+    </div>
+  </div>
+  @if (selectedCustomer(); as c) {
+    <div class="cust-strip">
+      <strong>{{ c.name }}</strong>
+      <span>Cust Id: {{ c.code }}</span>
+      <span>{{ c.phone || '' }}</span>
+      <span>{{ c.address || c.city || '' }}</span>
+    </div>
+  }
+</section>
+
+<div class="tabs">
+  <button type="button" [class.active]="sellTab==='BILL'" (click)="sellTab='BILL'">Sell bill</button>
+  <button type="button" [class.active]="sellTab==='LIST'" (click)="sellTab='LIST'">Sold invoice list</button>
+</div>
+
+@if (sellTab === 'BILL') {
+  <section class="panel pad scan-row">
+    <div class="scan">
+      <label>Add product ID / barcode / RFID</label>
+      <div class="scan-input">
+        <input [(ngModel)]="addQuery" name="aq" (ngModelChange)="searchAdd()" (keyup.enter)="lookups()[0] && addLookup(lookups()[0])" placeholder="Type SKU / barcode / name" />
+        <button type="button" class="btn btn-info" (click)="searchAdd()">Go</button>
+      </div>
+      @if (lookups().length) {
+        <ul class="lookup-list">
+          @for (u of lookups(); track u.id) {
+            <li><button type="button" (click)="addLookup(u)">{{ u.sku }} — {{ u.name }} {{ u.barcode ? '('+u.barcode+')' : '' }}</button></li>
+          }
+        </ul>
+      }
+    </div>
+  </section>
+
+  <section class="panel pad">
+    <div class="section-bar">
+      <h2>Item lines</h2>
+      <button type="button" class="btn btn-ghost btn-sm" (click)="addManualLine()">+ Manual line</button>
+    </div>
+
+    @for (line of lines; track $index; let i = $index) {
+      <div class="line-block">
+        <div class="form-grid dense">
+          <div class="field"><label>Barcode</label><input [(ngModel)]="line.barcode" [name]="'bc'+i" /></div>
+          <div class="field span-2"><label>Item</label><input [(ngModel)]="line.itemName" [name]="'in'+i" /></div>
+          <div class="field"><label>Metal</label>
+            <select [(ngModel)]="line.metalId" [name]="'m'+i">
+              <option value="">—</option>
+              @for (m of metals(); track m.id) { <option [value]="m.id">{{ m.name }}</option> }
+            </select>
+          </div>
+          <div class="field"><label>Purity</label>
+            <select [(ngModel)]="line.purityId" [name]="'p'+i" (ngModelChange)="onLinePurity(i)">
+              <option value="">—</option>
+              @for (p of filteredPurities(line.metalId); track p.id) { <option [value]="p.id">{{ p.label }}</option> }
+            </select>
+          </div>
+          <div class="field"><label>Qty</label><input type="number" [(ngModel)]="line.quantity" [name]="'q'+i" (ngModelChange)="previewLine(i)" /></div>
+          <div class="field"><label>GS WT</label><input type="number" step="0.0001" [(ngModel)]="line.grossWeight" [name]="'g'+i" (ngModelChange)="previewLine(i)" /></div>
+          <div class="field"><label>Stone WT</label><input type="number" step="0.0001" [(ngModel)]="line.stoneWeight" [name]="'s'+i" (ngModelChange)="previewLine(i)" /></div>
+          <div class="field"><label>Purity %</label><input type="number" step="0.0001" [(ngModel)]="line.purityPercent" [name]="'pp'+i" (ngModelChange)="previewLine(i)" /></div>
+          <div class="field"><label>WSTG %</label><input type="number" step="0.0001" [(ngModel)]="line.wastagePercent" [name]="'w'+i" (ngModelChange)="previewLine(i)" /></div>
+          <div class="field"><label>Cust WSTG %</label><input type="number" step="0.0001" [(ngModel)]="line.custWastagePercent" [name]="'cw'+i" (ngModelChange)="previewLine(i)" /></div>
+          <div class="field"><label>Rate /g</label><input type="number" step="0.0001" [(ngModel)]="line.ratePerGram" [name]="'r'+i" (ngModelChange)="previewLine(i)" /></div>
+          <div class="field"><label>Mkg type</label>
+            <select [(ngModel)]="line.makingType" [name]="'mt'+i" (ngModelChange)="previewLine(i)">
+              <option value="PP">PP</option><option value="PER_GRAM">GM</option><option value="PERCENT">%</option><option value="FIXED">FX</option>
+            </select>
+          </div>
+          <div class="field"><label>Mkg rate</label><input type="number" step="0.0001" [(ngModel)]="line.makingRate" [name]="'mr'+i" (ngModelChange)="previewLine(i)" /></div>
+          <div class="field"><label>Val add</label><input type="number" step="0.01" [(ngModel)]="line.valueAdded" [name]="'va'+i" (ngModelChange)="previewLine(i)" /></div>
+          <div class="field readonly"><label>FN / FFN</label><div class="value">{{ line.previewFine ?? '—' }} / {{ line.previewFinalFine ?? '—' }}</div></div>
+          <div class="field readonly"><label>Line ₹</label><div class="value">{{ line.previewTotal != null ? (line.previewTotal | number:'1.2-2') : '—' }}</div></div>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="removeLine(i)">Remove line</button>
+      </div>
+    } @empty {
+      <p class="empty-hint">Scan or search a product above, or add a manual line.</p>
+    }
+  </section>
+
+  <div class="sell-bottom">
+    <section class="panel pad exchange">
+      <h2>Metal received (old gold / exchange)</h2>
+      <div class="form-grid">
+        <div class="field"><label>Type</label>
+          <select [(ngModel)]="exchange.metalType" name="ext"><option>GOLD</option><option>SILVER</option></select>
+        </div>
+        <div class="field span-2"><label>Desc</label><input [(ngModel)]="exchange.description" name="exd" /></div>
+        <div class="field"><label>GS WT</label><input type="number" step="0.0001" [(ngModel)]="exchange.grossWeight" name="exg" /></div>
+        <div class="field"><label>Less</label><input type="number" step="0.0001" [(ngModel)]="exchange.lessWeight" name="exl" /></div>
+        <div class="field"><label>Tunch %</label><input type="number" step="0.0001" [(ngModel)]="exchange.purityPercent" name="exp" /></div>
+        <div class="field"><label>Rate /g</label><input type="number" step="0.0001" [(ngModel)]="exchange.ratePerGram" name="exr" /></div>
+        <div class="field readonly"><label>Exchange ₹</label><div class="value">{{ exchangeVal() | number:'1.2-2' }}</div></div>
+      </div>
+    </section>
+
+    <section class="panel pad pay">
+      <h2>Tax · charges · payment</h2>
+      <div class="tax-toggles">
+        <label><input type="checkbox" [(ngModel)]="pay.applyCgst" name="cg" /> CGST</label>
+        <label><input type="checkbox" [(ngModel)]="pay.applySgst" name="sg" /> SGST</label>
+      </div>
+      <div class="form-grid">
+        <div class="field"><label>CGST %</label><input type="number" step="0.01" [(ngModel)]="pay.cgstPercent" name="cgp" /></div>
+        <div class="field"><label>SGST %</label><input type="number" step="0.01" [(ngModel)]="pay.sgstPercent" name="sgp" /></div>
+        <div class="field"><label>Hallmark</label><input type="number" step="0.01" [(ngModel)]="pay.hallmarkAmount" name="hm" /></div>
+        <div class="field"><label>Other ch</label><input type="number" step="0.01" [(ngModel)]="pay.otherCharges" name="oc" /></div>
+        <div class="field"><label>Courier</label><input type="number" step="0.01" [(ngModel)]="pay.courierCharges" name="cc" /></div>
+        <div class="field"><label>Cash</label><input type="number" step="0.01" [(ngModel)]="pay.cashAmount" name="cash" class="pay-cash" /></div>
+        <div class="field"><label>Card</label><input type="number" step="0.01" [(ngModel)]="pay.cardAmount" name="card" /></div>
+        <div class="field"><label>Online</label><input type="number" step="0.01" [(ngModel)]="pay.onlineAmount" name="onl" /></div>
+        <div class="field"><label>Cheque</label><input type="number" step="0.01" [(ngModel)]="pay.chequeAmount" name="chq" /></div>
+        <div class="field"><label>Udhaar</label><input type="number" step="0.01" [(ngModel)]="pay.udhaarAmount" name="udh" /></div>
+      </div>
+      <aside class="totals">
+        <div><span>Amount</span><strong>₹ {{ linesSubtotal() | number:'1.2-2' }}</strong></div>
+        <div><span>Taxable</span><strong>₹ {{ taxableBase() | number:'1.2-2' }}</strong></div>
+        <div><span>CGST</span><strong>₹ {{ cgstAmt() | number:'1.2-2' }}</strong></div>
+        <div><span>SGST</span><strong>₹ {{ sgstAmt() | number:'1.2-2' }}</strong></div>
+        <div><span>Exchange</span><strong>− ₹ {{ exchangeVal() | number:'1.2-2' }}</strong></div>
+        <div class="grand"><span>Total</span><strong>₹ {{ grandTotal() | number:'1.2-2' }}</strong></div>
+        <div><span>Received</span><strong>₹ {{ received() | number:'1.2-2' }}</strong></div>
+        <div class="bal"><span>Balance</span><strong>₹ {{ balanceDue() | number:'1.2-2' }}</strong></div>
+      </aside>
+      <div class="actions">
+        <button type="button" class="btn btn-ghost" (click)="previewAll()">Recalculate</button>
+        <button type="button" class="btn btn-warn" (click)="fillCash()">Cash settle</button>
+        <button type="button" class="btn btn-success" (click)="finalizeSale()">Submit</button>
+      </div>
+    </section>
+  </div>
+}
+
+@if (sellTab === 'LIST') {
+  <section class="panel pad table-wrap">
+    <h2>Item sold invoice</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>No</th><th>Date</th><th>Customer</th><th>Metal ₹</th><th>Tax</th><th>Grand</th><th>Paid</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (inv of invoices(); track inv.id) {
+          <tr>
+            <td>{{ inv.invoiceNo }}</td>
+            <td>{{ inv.invoiceDate }}</td>
+            <td>{{ inv.customerId || 'Walk-in' }}</td>
+            <td>{{ inv.metalAmount | number:'1.2-2' }}</td>
+            <td>{{ inv.taxAmount | number:'1.2-2' }}</td>
+            <td>{{ inv.grandTotal | number:'1.2-2' }}</td>
+            <td>{{ inv.paidAmount | number:'1.2-2' }}</td>
+            <td><span class="badge badge-ok">{{ inv.status }}</span></td>
+          </tr>
+        } @empty {
+          <tr><td colspan="8" class="empty-hint">No invoices yet</td></tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}

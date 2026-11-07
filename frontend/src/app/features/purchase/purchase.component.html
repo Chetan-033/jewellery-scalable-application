@@ -1,0 +1,71 @@
+<div class="page-head">
+  <div>
+    <h1>Purchase</h1>
+    <p>Supplier invoice with metal valuation and optional stock inward.</p>
+  </div>
+</div>
+
+@if (message()) { <p class="flash">{{ message() }}</p> }
+
+<section class="panel pad">
+  <h2>Supplier</h2>
+  <div class="row">
+    <div class="field grow">
+      <label>Select supplier</label>
+      <select [(ngModel)]="supplierId" name="sid">
+        <option value="">—</option>
+        @for (s of suppliers(); track s.id) {
+          <option [value]="s.id">{{ s.name }} ({{ s.code }})</option>
+        }
+      </select>
+    </div>
+  </div>
+  <div class="form-grid">
+    <div class="field"><label>New supplier name</label><input [(ngModel)]="newSupplier.name" name="sn" /></div>
+    <div class="field"><label>Phone</label><input [(ngModel)]="newSupplier.phone" name="sp" /></div>
+    <div class="field"><label>City</label><input [(ngModel)]="newSupplier.city" name="sc" /></div>
+    <div class="field"><label>GSTIN</label><input [(ngModel)]="newSupplier.gstin" name="sg" /></div>
+  </div>
+  <button type="button" class="btn btn-ghost" (click)="saveSupplier()">Save supplier</button>
+</section>
+
+<section class="panel pad">
+  <h2>Purchase line</h2>
+  <div class="form-grid">
+    <div class="field">
+      <label>Stock item (optional)</label>
+      <select [(ngModel)]="line.stockItemId" name="item" (ngModelChange)="onStockPick()">
+        <option value="">Create valuation only</option>
+        @for (i of items(); track i.id) {
+          <option [value]="i.id">{{ i.sku }} — {{ i.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="field"><label>Item name</label><input [(ngModel)]="line.itemName" name="iname" /></div>
+    <div class="field"><label>Gross wt</label><input type="number" step="0.0001" [(ngModel)]="line.grossWeight" name="gw" /></div>
+    <div class="field"><label>Purity %</label><input type="number" step="0.0001" [(ngModel)]="line.purityPercent" name="pp" /></div>
+    <div class="field"><label>Wastage %</label><input type="number" step="0.0001" [(ngModel)]="line.wastagePercent" name="wp" /></div>
+    <div class="field"><label>Rate / g</label><input type="number" step="0.0001" [(ngModel)]="line.ratePerGram" name="rt" /></div>
+    <div class="field"><label>Making / g</label><input type="number" step="0.0001" [(ngModel)]="line.makingRate" name="mr" /></div>
+  </div>
+  <button type="button" class="btn btn-primary" (click)="savePurchase()">Post purchase</button>
+</section>
+
+<section class="panel pad">
+  <h2>Recent purchases</h2>
+  <table class="data-table">
+    <thead><tr><th>No</th><th>Date</th><th>Total</th><th>Status</th></tr></thead>
+    <tbody>
+      @for (inv of invoices(); track inv.id) {
+        <tr>
+          <td>{{ inv.invoiceNo }}</td>
+          <td>{{ inv.invoiceDate }}</td>
+          <td>₹ {{ inv.grandTotal | number: '1.2-2' }}</td>
+          <td><span class="badge badge-ok">{{ inv.status }}</span></td>
+        </tr>
+      } @empty {
+        <tr><td colspan="4" class="empty-hint">No purchases yet.</td></tr>
+      }
+    </tbody>
+  </table>
+</section>

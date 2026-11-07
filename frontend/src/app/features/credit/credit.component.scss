@@ -1,0 +1,4 @@
+.pad { padding: 0.85rem 1rem; margin-bottom: 0.7rem; }
+.pad h2 { margin: 0 0 0.55rem; font-size: 0.95rem; color: var(--navy); }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+@media (max-width: 900px) { .split { grid-template-columns: 1fr; } }

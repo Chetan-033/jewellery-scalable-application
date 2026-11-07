@@ -1,0 +1,254 @@
+<div class="page-head">
+  <div>
+    <h1>Stock</h1>
+    <p>Fine / imitation / raw panels and dense retail add-stock — reference workflow.</p>
+  </div>
+  <div class="head-actions">
+    <button type="button" class="btn" [class.btn-navy]="view==='panel'" [class.btn-ghost]="view!=='panel'" (click)="view='panel'">Stock panel</button>
+    <button type="button" class="btn" [class.btn-primary]="view==='add'" [class.btn-ghost]="view!=='add'" (click)="view='add'">Add retail stock</button>
+    <button type="button" class="btn btn-ghost" (click)="showSettings=!showSettings">Settings</button>
+  </div>
+</div>
+
+@if (message()) { <p class="flash">{{ message() }}</p> }
+
+<div class="tabs">
+  <button type="button" [class.active]="stockTab==='FINE'" (click)="stockTab='FINE'">Fine jewellery</button>
+  <button type="button" [class.active]="stockTab==='RAW'" (click)="stockTab='RAW'">Raw metal</button>
+</div>
+
+@if (showSettings && settings(); as s) {
+  <section class="panel settings">
+    <h2>Stock calculation settings</h2>
+    <div class="form-grid">
+      <div class="field"><label>Valuation by</label>
+        <select [ngModel]="s.stockValBy" (ngModelChange)="saveSetting('stockValBy',$event)" name="svb">
+          <option value="byGrossWt">Gross</option><option value="byNetWt">Net</option>
+          <option value="byFineWt">Fine</option><option value="byFFineWt">Final fine</option>
+        </select>
+      </div>
+      <div class="field"><label>Making by</label>
+        <select [ngModel]="s.stockMkgBy" (ngModelChange)="saveSetting('stockMkgBy',$event)" name="smb">
+          <option value="mkgByGrossWt">Gross</option><option value="mkgByNetWt">Net</option>
+          <option value="mkgByFineWt">Fine</option><option value="mkgByFFineWt">Final fine</option>
+        </select>
+      </div>
+      <div class="field"><label>Wastage by</label>
+        <select [ngModel]="s.stockCsWstgBy" (ngModelChange)="saveSetting('stockCsWstgBy',$event)" name="swb">
+          <option value="custWastgByGrossWt">Gross</option><option value="custWastgByNetWt">Net</option>
+          <option value="custWastgByFineWt">Fine</option>
+        </select>
+      </div>
+      <div class="field"><label>Lab by</label>
+        <select [ngModel]="s.stockLbrBy" (ngModelChange)="saveSetting('stockLbrBy',$event)" name="slb">
+          <option value="lbByGrossWt">Gross</option><option value="lbByNetWt">Net</option>
+          <option value="lbrByFineWt">Fine</option><option value="lbrByFFineWt">Final fine</option>
+        </select>
+      </div>
+      <div class="field"><label>Final fine mode</label>
+        <select [ngModel]="s.addStockFinalFinewt" (ngModelChange)="saveSetting('addStockFinalFinewt',$event)" name="sff">
+          <option value="byDefault">Default %</option><option value="byFineWt">Fine+wstg</option>
+          <option value="byNetWt">Net+wstg</option><option value="byGrossWt">Gross+wstg</option>
+        </select>
+      </div>
+      <div class="field"><label>Fine base</label>
+        <select [ngModel]="s.stockFineBaseBy" (ngModelChange)="saveSetting('stockFineBaseBy',$event)" name="sfb">
+          <option value="byNetWt">Net</option><option value="byGrossWt">Gross</option>
+        </select>
+      </div>
+    </div>
+  </section>
+}
+
+@if (view === 'panel') {
+  <section class="filter-bar panel">
+    <div class="field"><label>Metal</label>
+      <select [(ngModel)]="filterMetal" name="fm"><option value="">All</option>
+        @for (m of metals(); track m.id) { <option [value]="m.id">{{ m.name }}</option> }
+      </select>
+    </div>
+    <div class="field"><label>Category</label><input [(ngModel)]="filterCategory" name="fc" /></div>
+    <div class="field"><label>Item name</label><input [(ngModel)]="filterName" name="fn" /></div>
+    <button type="button" class="btn btn-info" (click)="reload()">Go</button>
+  </section>
+
+  @if (summary(); as sum) {
+    <div class="stock-cards">
+      <article class="stock-card c1">
+        <h3>Gold–Silver stock</h3>
+        <p>Gold: <strong>{{ sum.goldGross | number:'1.3-3' }} GM</strong></p>
+        <p>Silver: <strong>{{ sum.silverGross | number:'1.3-3' }} GM</strong></p>
+      </article>
+      <article class="stock-card c2">
+        <h3>Gold stock</h3>
+        <p>GS WT: <strong>{{ sum.goldGross | number:'1.3-3' }}</strong></p>
+        <p>NT WT: <strong>{{ sum.goldNet | number:'1.3-3' }}</strong></p>
+      </article>
+      <article class="stock-card c3">
+        <h3>Silver stock</h3>
+        <p>GS WT: <strong>{{ sum.silverGross | number:'1.3-3' }}</strong></p>
+        <p>NT WT: <strong>{{ sum.silverNet | number:'1.3-3' }}</strong></p>
+      </article>
+      <article class="stock-card c4">
+        <h3>Jewellery panel</h3>
+        <p>Items with balance: <strong>{{ sum.itemCount }}</strong></p>
+        <p>Retail pieces: <strong>{{ sum.retailCount }}</strong></p>
+        <button type="button" class="btn btn-sm btn-navy" (click)="view='add'">Add stock</button>
+      </article>
+      <article class="stock-card c5">
+        <h3>Retail stock list</h3>
+        <p>Open dense add / list below</p>
+        <button type="button" class="btn btn-sm btn-primary" (click)="view='add'">Retail add</button>
+      </article>
+      <article class="stock-card c6">
+        <h3>Purchase stock list</h3>
+        <p>Use Purchase module for supplier IN</p>
+      </article>
+    </div>
+  }
+
+  <section class="panel table-wrap">
+    <h2>Recent stock entries</h2>
+    <table class="data-table">
+      <thead>
+        <tr><th>Entry</th><th>Item</th><th>Cat</th><th>Type</th><th>Qty</th><th>GS</th><th>NT</th><th>F.Fine</th><th>Final ₹</th><th>Barcode</th></tr>
+      </thead>
+      <tbody>
+        @for (row of filteredEntries(); track row.id) {
+          <tr>
+            <td>{{ row.entryNo }}</td><td>{{ row.itemName }}</td><td>{{ row.itemCategory || '—' }}</td>
+            <td>{{ row.stockType }}</td><td>{{ row.quantity }}</td><td>{{ row.grossWeight }}</td>
+            <td>{{ row.netWeight }}</td><td>{{ row.finalFineWeight }}</td>
+            <td>{{ row.finalValuation | number:'1.2-2' }}</td><td>{{ row.barcode || '—' }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="10" class="empty-hint">No entries in this filter</td></tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
+@if (view === 'add') {
+  <section class="panel add-form">
+    <div class="add-title">
+      <h2>Add jewellery retail stock — (opening / direct)</h2>
+      <div class="type-toggle">
+        <button type="button" [class.active]="form.stockType==='WHOLESALE'" (click)="form.stockType='WHOLESALE'">Wholesale</button>
+        <button type="button" [class.active]="form.stockType==='RETAIL'" (click)="form.stockType='RETAIL'">Retail</button>
+        <button type="button" [class.active]="form.stockType==='RAW'" (click)="form.stockType='RAW'">Raw</button>
+      </div>
+    </div>
+
+    <div class="form-grid dense">
+      <div class="field span-2">
+        <label>Existing item</label>
+        <select [(ngModel)]="form.stockItemId" name="exist" (ngModelChange)="onExistingPick()">
+          <option value="">— New item —</option>
+          @for (i of items(); track i.id) { <option [value]="i.id">{{ i.sku }} — {{ i.name }}</option> }
+        </select>
+      </div>
+      <div class="field"><label>Prefix / SKU</label><input [(ngModel)]="form.sku" name="sku" placeholder="Auto" /></div>
+      <div class="field"><label>Barcode</label><input [(ngModel)]="form.barcode" name="bc" /></div>
+      <div class="field"><label>RFID</label><input [(ngModel)]="form.rfidNo" name="rfid" /></div>
+      <div class="field"><label>Hallmark UID</label><input [(ngModel)]="form.hsnNo" name="hmid" /></div>
+      <div class="field"><label>Category</label><input [(ngModel)]="form.itemCategory" name="cat" /></div>
+      <div class="field span-2"><label>Name</label><input [(ngModel)]="form.itemName" name="iname" required /></div>
+      <div class="field"><label>Metal</label>
+        <select [(ngModel)]="form.metalId" name="metal" (ngModelChange)="runPreview()">
+          <option value="">—</option>
+          @for (m of metals(); track m.id) { <option [value]="m.id">{{ m.name }}</option> }
+        </select>
+      </div>
+      <div class="field"><label>Purity</label>
+        <select [(ngModel)]="form.purityId" name="purity" (ngModelChange)="onPurityPick()">
+          <option value="">—</option>
+          @for (p of filteredPurities(); track p.id) { <option [value]="p.id">{{ p.label }} ({{ p.fineness }}%)</option> }
+        </select>
+      </div>
+      <div class="field"><label>Metal rate /g</label><input type="number" step="0.0001" [(ngModel)]="form.metalRate" name="rate" (ngModelChange)="runPreview()" /></div>
+      <div class="field"><label>Brand / seller</label><input [(ngModel)]="form.brandName" name="br" /></div>
+      <div class="field"><label>Counter</label><input [(ngModel)]="form.counterName" name="ctr" /></div>
+      <div class="field"><label>Qty</label><input type="number" [(ngModel)]="form.quantity" name="qty" (ngModelChange)="runPreview()" /></div>
+      <div class="field"><label>GS WT</label><input type="number" step="0.0001" [(ngModel)]="form.grossWeight" name="gs" (ngModelChange)="runPreview()" /></div>
+      <div class="field"><label>Less WT</label><input type="number" step="0.0001" [(ngModel)]="form.lessWeight" name="less" (ngModelChange)="runPreview()" /></div>
+      <div class="field"><label>Pkt WT</label><input type="number" step="0.0001" [(ngModel)]="form.pktWeight" name="pkt" (ngModelChange)="runPreview()" /></div>
+      <div class="field readonly"><label>NT WT</label><div class="value">{{ preview()?.netWeight ?? '—' }}</div></div>
+      <div class="field"><label>Tag WT</label><input type="number" step="0.0001" [(ngModel)]="form.tagWeight" name="tag" /></div>
+      <div class="field"><label>Purity %</label><input type="number" step="0.0001" [(ngModel)]="form.purityPercent" name="pp" (ngModelChange)="runPreview()" /></div>
+      <div class="field"><label>WST %</label><input type="number" step="0.0001" [(ngModel)]="form.wastagePercent" name="wp" (ngModelChange)="runPreview()" /></div>
+      <div class="field readonly"><label>WST WT</label><div class="value">{{ preview()?.wastageWeight ?? '—' }}</div></div>
+      <div class="field readonly"><label>F. Purity</label><div class="value">{{ preview()?.finalPurityPercent ?? '—' }}</div></div>
+      <div class="field readonly"><label>FN WT</label><div class="value">{{ preview()?.fineWeight ?? '—' }}</div></div>
+      <div class="field readonly"><label>FFN WT</label><div class="value">{{ preview()?.finalFineWeight ?? '—' }}</div></div>
+      <div class="field"><label>Lab chrg</label><input type="number" step="0.0001" [(ngModel)]="form.labCharges" name="lab" (ngModelChange)="runPreview()" /></div>
+      <div class="field"><label>Lab type</label>
+        <select [(ngModel)]="form.labChargesType" name="labt" (ngModelChange)="runPreview()">
+          <option value="GM">GM</option><option value="PP">PP</option><option value="FX">FX</option><option value="PER">%</option>
+        </select>
+      </div>
+      <div class="field"><label>Mkg chrg</label><input type="number" step="0.0001" [(ngModel)]="form.makingCharges" name="mkg" (ngModelChange)="runPreview()" /></div>
+      <div class="field"><label>Mkg type</label>
+        <select [(ngModel)]="form.makingChargesType" name="mkgt" (ngModelChange)="runPreview()">
+          <option value="GM">GM</option><option value="PP">PP</option><option value="FX">FX</option><option value="PER">%</option>
+        </select>
+      </div>
+      <div class="field"><label>Other ch</label><input type="number" step="0.0001" [(ngModel)]="form.otherCharges" name="oth" (ngModelChange)="runPreview()" /></div>
+      <div class="field"><label>Hallmark</label><input type="number" step="0.0001" [(ngModel)]="form.hallmarkCharges" name="hm" (ngModelChange)="runPreview()" /></div>
+      <div class="field"><label>Tax %</label><input type="number" step="0.0001" [(ngModel)]="form.taxPercent" name="tax" (ngModelChange)="runPreview()" /></div>
+      <div class="field span-2"><label>Other info / model</label><input [(ngModel)]="form.otherInfo" name="oi" /></div>
+    </div>
+
+    <div class="section-title">
+      <h3>Packet / less rows</h3>
+      <button type="button" class="btn btn-ghost btn-sm" (click)="addPacket()">+ Packet</button>
+    </div>
+    <div class="mini-table">
+      @for (p of packets; track $index; let i = $index) {
+        <div class="mini-row">
+          <input placeholder="Desc" [(ngModel)]="p.description" [name]="'pd'+i" (ngModelChange)="runPreview()" />
+          <input type="number" placeholder="Qty" [(ngModel)]="p.quantity" [name]="'pq'+i" (ngModelChange)="runPreview()" />
+          <input type="number" step="0.0001" placeholder="Wt" [(ngModel)]="p.weight" [name]="'pw'+i" (ngModelChange)="runPreview()" />
+          <select [(ngModel)]="p.operation" [name]="'po'+i" (ngModelChange)="runPreview()">
+            <option value="LESS">LESS</option><option value="ADD">ADD</option>
+          </select>
+          <button type="button" class="btn btn-ghost btn-sm" (click)="removePacket(i)">×</button>
+        </div>
+      }
+    </div>
+
+    <div class="section-title">
+      <h3>Stone / crystal</h3>
+      <button type="button" class="btn btn-ghost btn-sm" (click)="addCrystal()">+ Stone</button>
+    </div>
+    @for (c of crystals; track $index; let i = $index) {
+      <div class="mini-row wrap">
+        <input placeholder="Name" [(ngModel)]="c.name" [name]="'cn'+i" (ngModelChange)="runPreview()" />
+        <input placeholder="Cat" [(ngModel)]="c.category" [name]="'cc'+i" />
+        <input type="number" placeholder="Qty" [(ngModel)]="c.quantity" [name]="'cq'+i" (ngModelChange)="runPreview()" />
+        <input type="number" step="0.0001" placeholder="Wt" [(ngModel)]="c.weight" [name]="'cw'+i" (ngModelChange)="runPreview()" />
+        <input type="number" placeholder="Rate" [(ngModel)]="c.rate" [name]="'cr'+i" (ngModelChange)="runPreview()" />
+        <label class="check"><input type="checkbox" [(ngModel)]="c.autoLess" [name]="'cal'+i" (ngModelChange)="runPreview()" /> Auto less</label>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="removeCrystal(i)">×</button>
+      </div>
+    }
+
+    @if (preview(); as p) {
+      <aside class="valuation">
+        <div><span>Metal</span><strong>₹ {{ p.metalValuation | number:'1.2-2' }}</strong></div>
+        <div><span>Lab</span><strong>₹ {{ p.totalLabCharges | number:'1.2-2' }}</strong></div>
+        <div><span>Making</span><strong>₹ {{ p.totalMakingCharges | number:'1.2-2' }}</strong></div>
+        <div><span>Hallmark</span><strong>₹ {{ p.totalHallmarkCharges | number:'1.2-2' }}</strong></div>
+        <div><span>Stone</span><strong>₹ {{ p.stoneValuation | number:'1.2-2' }}</strong></div>
+        <div class="total"><span>Final</span><strong>₹ {{ p.finalValuation | number:'1.2-2' }}</strong></div>
+      </aside>
+    }
+
+    <div class="add-actions">
+      <button type="button" class="btn btn-success" [disabled]="saving()" (click)="save()">{{ saving() ? 'Saving…' : 'Add stock' }}</button>
+      <button type="button" class="btn btn-info" (click)="onExistingPick()">Existing item</button>
+      <button type="button" class="btn btn-warn" (click)="runPreview()">Recalculate</button>
+      <button type="button" class="btn btn-ghost" (click)="view='panel'">Back to panel</button>
+    </div>
+  </section>
+}

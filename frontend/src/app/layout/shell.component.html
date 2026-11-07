@@ -1,0 +1,103 @@
+<div
+  class="erp-shell"
+  [class.collapsed]="sidebarCollapsed()"
+  [class.mobile-open]="mobileNavOpen()"
+>
+  @if (mobileNavOpen()) {
+    <button type="button" class="sidebar-backdrop" aria-label="Close menu" (click)="closeMobileNav()"></button>
+  }
+
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">◆</div>
+      <div class="brand-text">
+        <strong>{{ firmName() }}</strong>
+        <span>Jewellery ERP</span>
+      </div>
+      <button type="button" class="collapse-btn desktop-only" (click)="toggleSidebar()" [attr.title]="sidebarCollapsed() ? 'Expand menu' : 'Collapse menu'">
+        {{ sidebarCollapsed() ? '»' : '«' }}
+      </button>
+      <button type="button" class="collapse-btn mobile-only" (click)="closeMobileNav()" aria-label="Close menu">✕</button>
+    </div>
+
+    <nav class="side-nav">
+      @for (group of navGroups; track group.title) {
+        <div class="nav-group">
+          <p class="nav-group-title">{{ group.title }}</p>
+          @for (item of group.items; track item.path + item.label) {
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              [routerLinkActiveOptions]="{ exact: !!item.exact }"
+              [attr.title]="item.label"
+              (click)="closeMobileNav()"
+            >
+              <span class="nav-ico" aria-hidden="true">{{ item.icon }}</span>
+              <span class="nav-label">{{ item.label }}</span>
+            </a>
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="status-pill" [class.up]="apiOk()" [class.down]="!apiOk()">
+        <span class="dot"></span>
+        {{ apiOk() ? 'System online' : 'API offline' }}
+      </div>
+      <button type="button" class="logout-btn" (click)="auth.logout()">Logout</button>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <button type="button" class="icon-btn mobile-only" (click)="mobileNavOpen.set(true)" aria-label="Open menu">☰</button>
+
+      <form class="search" (submit)="$event.preventDefault(); searchGlobal()">
+        <span class="search-ico" aria-hidden="true">⌕</span>
+        <input
+          [(ngModel)]="globalQuery"
+          name="gq"
+          type="search"
+          placeholder="Search customers, stock, invoices…"
+          autocomplete="off"
+        />
+      </form>
+
+      <div class="rate-strip" aria-label="Live metal rates">
+        @if (rates().length) {
+          @for (r of rates(); track r.metalCode + (r.purityLabel || ''); let i = $index) {
+            @if (i < 4) {
+              <div class="rate-chip">
+                <span class="r-name">{{ rateLabel(r) }}</span>
+                <strong>{{ rateValue(r) }}</strong>
+              </div>
+            }
+          }
+        } @else {
+          <a routerLink="/app/rates" class="rate-chip muted">Set daily rates →</a>
+        }
+      </div>
+
+      <div class="top-actions">
+        <time class="clock" [attr.datetime]="clock().toISOString()">{{ clock() | date: 'HH:mm' }}</time>
+        <a routerLink="/app/rates" class="icon-btn" title="Rates">₹</a>
+        <a routerLink="/app/admin" class="icon-btn bell" title="Notifications">
+          <span aria-hidden="true">🔔</span>
+          <i class="ping"></i>
+        </a>
+        <div class="user-chip" [attr.title]="auth.user()?.displayName || 'User'">
+          <span class="avatar">{{ userInitials() }}</span>
+          <div class="user-meta">
+            <strong>{{ auth.user()?.displayName || 'Admin' }}</strong>
+            <span>{{ auth.user()?.roles?.[0] || 'Operator' }}</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-pane">
+      <router-outlet />
+    </main>
+  </div>
+</div>

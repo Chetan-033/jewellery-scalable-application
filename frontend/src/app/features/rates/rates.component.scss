@@ -1,0 +1,37 @@
+.flash {
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 8px;
+  background: #fff8e8;
+  border: 1px solid #efd9a4;
+  color: var(--gold-deep);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1rem;
+}
+
+.form {
+  padding: 1.1rem;
+  display: grid;
+  gap: 0.75rem;
+  height: fit-content;
+}
+
+.form h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--navy);
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
