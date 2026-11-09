@@ -1,0 +1,500 @@
+<div class="customer-form-page">
+  <div class="page-header">
+    <div class="header-titles">
+      <a routerLink="/app/masters" class="back-link">← Back to Masters</a>
+      <h1>{{ isEdit() ? 'Edit Customer' : 'Customer Master / Add Customer' }}</h1>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-secondary" (click)="resetForm()">Reset</button>
+      <button type="button" class="btn btn-primary" [disabled]="isSaving()" (click)="saveCustomer()">
+        {{ isSaving() ? 'Saving...' : (isEdit() ? 'Update Customer' : 'Save Customer') }}
+      </button>
+    </div>
+  </div>
+
+  @if (message()) {
+    <div class="alert-banner" [class.success]="message()?.type === 'success'" [class.error]="message()?.type === 'error'">
+      {{ message()?.text }}
+    </div>
+  }
+
+  <form class="erp-form-container" (submit)="$event.preventDefault(); saveCustomer()">
+
+    <!-- 1. PERSONAL INFORMATION BOX -->
+    <fieldset class="form-section personal-section">
+      <legend class="section-legend">PERSONAL INFORMATION</legend>
+      <div class="section-body">
+
+        <!-- Row 1: Customer Type, Code, HOS, Sundry Debtors -->
+        <div class="form-row row-4">
+          <div class="input-cell">
+            <select [(ngModel)]="form.partyType" name="partyType" class="erp-input select-highlight">
+              <option value="Customer">Customer</option>
+              <option value="Retail Customer">Retail Customer</option>
+              <option value="Wholesale Customer">Wholesale Customer</option>
+              <option value="Karigar / Party">Karigar / Party</option>
+            </select>
+          </div>
+
+          <div class="input-cell code-composite">
+            <input type="text" value="C" readonly class="erp-input prefix-box" style="width: 48px; text-align: center;" />
+            <span class="hyphen">-</span>
+            <input type="text" [(ngModel)]="form.code" name="code" placeholder="Auto / 678" class="erp-input code-input" />
+          </div>
+
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.hos" name="hos" placeholder="HOS" class="erp-input text-amber" />
+          </div>
+
+          <div class="input-cell">
+            <select [(ngModel)]="form.accountGroup" name="accountGroup" class="erp-input select-highlight text-amber">
+              <option value="Sundry Debtors">Sundry Debtors</option>
+              <option value="Sundry Creditors">Sundry Creditors</option>
+              <option value="Retail Walk-in">Retail Walk-in</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Title, First Name, Last Name, Relation, Father Name, Mother Name -->
+        <div class="form-row row-name-composite">
+          <div class="input-cell title-cell">
+            <select [(ngModel)]="form.title" name="title" class="erp-input">
+              <option value="Ms.">Ms.</option>
+              <option value="Mr.">Mr.</option>
+              <option value="Mrs.">Mrs.</option>
+              <option value="Dr.">Dr.</option>
+              <option value="Shri">Shri</option>
+              <option value="Smt.">Smt.</option>
+            </select>
+          </div>
+
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.firstName" name="firstName" placeholder="First Name *" class="erp-input" required />
+          </div>
+
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.lastName" name="lastName" placeholder="Last Name" class="erp-input" />
+          </div>
+
+          <div class="input-cell rel-cell">
+            <select [(ngModel)]="form.relationType" name="relationType" class="erp-input">
+              <option value="S/o">S/o</option>
+              <option value="D/o">D/o</option>
+              <option value="W/o">W/o</option>
+            </select>
+          </div>
+
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.fatherName" name="fatherName" placeholder="Father Name" class="erp-input" />
+          </div>
+
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.motherName" name="motherName" placeholder="MOTHER NAME" class="erp-input" />
+          </div>
+        </div>
+
+        <!-- Row 3: Gender, DOB, Spouse Name, Spouse DOB -->
+        <div class="form-row row-4">
+          <div class="input-cell gender-radio-group">
+            <label class="radio-label">
+              <input type="radio" [(ngModel)]="form.gender" name="gender" value="M" />
+              <strong>M</strong>
+            </label>
+            <label class="radio-label">
+              <input type="radio" [(ngModel)]="form.gender" name="gender" value="F" />
+              <strong>F</strong>
+            </label>
+          </div>
+
+          <div class="input-cell date-compound">
+            <span class="inline-date-label">DATE OF BIRTH:</span>
+            <div class="tri-date-picker">
+              <select [(ngModel)]="form.dobDay" name="dobDay" class="erp-input date-part">
+                <option value="">DAY</option>
+                @for (d of days; track d) { <option [value]="d">{{ d }}</option> }
+              </select>
+              <select [(ngModel)]="form.dobMonth" name="dobMonth" class="erp-input date-part">
+                <option value="">JAN</option>
+                @for (m of months; track m.num) { <option [value]="m.num">{{ m.name }}</option> }
+              </select>
+              <select [(ngModel)]="form.dobYear" name="dobYear" class="erp-input date-part">
+                <option value="">YEAR</option>
+                @for (y of years; track y) { <option [value]="y">{{ y }}</option> }
+              </select>
+            </div>
+          </div>
+
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.spouseName" name="spouseName" placeholder="SPOUSE NAME" class="erp-input" />
+          </div>
+
+          <div class="input-cell date-compound">
+            <span class="inline-date-label">SPOUSE DOB :</span>
+            <div class="tri-date-picker">
+              <select [(ngModel)]="form.spouseDobDay" name="spouseDobDay" class="erp-input date-part">
+                <option value="">DAY</option>
+                @for (d of days; track d) { <option [value]="d">{{ d }}</option> }
+              </select>
+              <select [(ngModel)]="form.spouseDobMonth" name="spouseDobMonth" class="erp-input date-part">
+                <option value="">MON</option>
+                @for (m of months; track m.num) { <option [value]="m.num">{{ m.name }}</option> }
+              </select>
+              <select [(ngModel)]="form.spouseDobYear" name="spouseDobYear" class="erp-input date-part">
+                <option value="">YEAR</option>
+                @for (y of years; track y) { <option [value]="y">{{ y }}</option> }
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Caste, Max Qualification, Marital Status, Anniversary Date -->
+        <div class="form-row row-4">
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.caste" name="caste" placeholder="Caste" class="erp-input" />
+          </div>
+
+          <div class="input-cell date-compound">
+            <span class="inline-date-label">MAX QUALIFICATION:</span>
+            <input type="text" [(ngModel)]="form.qualification" name="qualification" placeholder="Qualification" class="erp-input" />
+          </div>
+
+          <div class="input-cell">
+            <select [(ngModel)]="form.maritalStatus" name="maritalStatus" class="erp-input">
+              <option value="">MARITAL STATUS</option>
+              <option value="Single">Single</option>
+              <option value="Married">Married</option>
+              <option value="Divorced">Divorced</option>
+              <option value="Widowed">Widowed</option>
+            </select>
+          </div>
+
+          <div class="input-cell date-compound">
+            <span class="inline-date-label">ANNIVERSARY DATE:</span>
+            <div class="tri-date-picker">
+              <select [(ngModel)]="form.annivDay" name="annivDay" class="erp-input date-part">
+                <option value="">DAY</option>
+                @for (d of days; track d) { <option [value]="d">{{ d }}</option> }
+              </select>
+              <select [(ngModel)]="form.annivMonth" name="annivMonth" class="erp-input date-part">
+                <option value="">MON</option>
+                @for (m of months; track m.num) { <option [value]="m.num">{{ m.name }}</option> }
+              </select>
+              <select [(ngModel)]="form.annivYear" name="annivYear" class="erp-input date-part">
+                <option value="">YEAR</option>
+                @for (y of years; track y) { <option [value]="y">{{ y }}</option> }
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </fieldset>
+
+    <!-- 2. PAN NUMBER / BANK DETAILS BOX -->
+    <fieldset class="form-section bank-section">
+      <legend class="section-legend-blue">
+        <span>PAN NUMBER / BANK DETAILS</span>
+        <button type="button" class="verify-aadhaar-btn" (click)="verifyAadhaar()">Verify Adhaar</button>
+      </legend>
+      <div class="section-body">
+
+        @if (aadhaarValidationMsg()) {
+          <div class="aadhaar-status-pill">
+            {{ aadhaarValidationMsg() }}
+          </div>
+        }
+
+        <!-- Row 1: PAN, GSTIN, TAX NO, Aadhaar -->
+        <div class="form-row row-4">
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.panNo" name="panNo" placeholder="PAN Number" maxlength="10" class="erp-input uppercase" />
+          </div>
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.gstin" name="gstin" placeholder="GSTIN" maxlength="15" class="erp-input uppercase" />
+          </div>
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.taxNo" name="taxNo" placeholder="TAX NO" class="erp-input" />
+          </div>
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.aadhaarNo" name="aadhaarNo" placeholder="Adhaar Card Number" maxlength="12" class="erp-input" />
+          </div>
+        </div>
+
+        <!-- Row 2: Bank Name, Bank Acc Name, Bank Acc No, Bank IFSC -->
+        <div class="form-row row-4">
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.bankName" name="bankName" placeholder="BANK NAME" class="erp-input" />
+          </div>
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.bankAccName" name="bankAccName" placeholder="BANK ACC NAME" class="erp-input" />
+          </div>
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.bankAccNo" name="bankAccNo" placeholder="BANK ACC NO" class="erp-input" />
+          </div>
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.bankIfscCode" name="bankIfscCode" placeholder="BANK IFSC CODE" maxlength="11" class="erp-input uppercase" />
+          </div>
+        </div>
+
+        <!-- Row 3: Occupation, Income, Nominee Name, Nominee Relation -->
+        <div class="form-row row-4">
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.occupation" name="occupation" placeholder="OCCUPATION" class="erp-input" />
+          </div>
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.annualIncome" name="annualIncome" placeholder="MONTHALY/ANNUAL INCC" class="erp-input" />
+          </div>
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.nomineeName" name="nomineeName" placeholder="NOMINIEE NAME" class="erp-input" />
+          </div>
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.nomineeRelation" name="nomineeRelation" placeholder="NOMINIEE RELATION" class="erp-input" />
+          </div>
+        </div>
+
+        <!-- Row 4: Designation, Login ID, Password, Master Password -->
+        <div class="form-row row-4">
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.designation" name="designation" placeholder="DESIGNATION" class="erp-input" />
+          </div>
+          <div class="input-cell">
+            <input type="text" [(ngModel)]="form.loginId" name="loginId" placeholder="LOGIN ID" class="erp-input" />
+          </div>
+          <div class="input-cell">
+            <input type="password" [(ngModel)]="form.portalPassword" name="portalPassword" placeholder="PASSWORD" class="erp-input" />
+          </div>
+          <div class="input-cell">
+            <input type="password" [(ngModel)]="form.masterPassword" name="masterPassword" placeholder="MASTER PASSWORD" class="erp-input" />
+          </div>
+        </div>
+
+      </div>
+    </fieldset>
+
+    <!-- 3. LOWER TWO-COLUMN SECTION: ADDRESS (LEFT) & CUSTOMER IMAGE / KYC (RIGHT) -->
+    <div class="lower-two-column-grid">
+
+      <!-- Left Column: ADDRESS INFORMATION -->
+      <fieldset class="form-section address-section">
+        <legend class="section-legend">ADDRESS INFORMATION</legend>
+        <div class="section-body">
+
+          <div class="form-row row-full">
+            <input type="text" [(ngModel)]="form.businessName" name="businessName" placeholder="SHOP NAME/BUSINESS NAME" class="erp-input" />
+          </div>
+
+          <div class="form-row row-full">
+            <input type="text" [(ngModel)]="form.officeAddress" name="officeAddress" placeholder="OFFICE/SHOP ADDRESS" class="erp-input" />
+          </div>
+
+          <div class="form-row row-full">
+            <input type="text" [(ngModel)]="form.permanentAddress" name="permanentAddress" placeholder="PERMANTENT/HOME TOWN ADDRESS" class="erp-input" />
+          </div>
+
+          <div class="form-row row-full">
+            <input type="text" [(ngModel)]="form.currentAddress" name="currentAddress" placeholder="CURRENT ADDRESS" class="erp-input" />
+          </div>
+
+          <div class="form-row row-full">
+            <input type="text" [(ngModel)]="form.shippingAddress" name="shippingAddress" placeholder="SHIPPING ADDRESS" class="erp-input" />
+          </div>
+
+          <div class="form-row row-2">
+            <div class="input-cell">
+              <input type="text" [(ngModel)]="form.village" name="village" placeholder="VILLAGE" class="erp-input" />
+            </div>
+            <div class="input-cell">
+              <input type="text" [(ngModel)]="form.wardNumber" name="wardNumber" placeholder="WARD NUMBER" class="erp-input" />
+            </div>
+          </div>
+
+          <div class="form-row row-full">
+            <input type="text" [(ngModel)]="form.tehsil" name="tehsil" placeholder="TEHSIL" class="erp-input" />
+          </div>
+
+          <div class="form-row row-2">
+            <div class="input-cell">
+              <input type="text" [(ngModel)]="form.city" name="city" placeholder="CITY" class="erp-input" />
+            </div>
+            <div class="input-cell">
+              <input type="text" [(ngModel)]="form.countryName" name="countryName" placeholder="India" class="erp-input text-amber" />
+            </div>
+          </div>
+
+          <div class="form-row row-2">
+            <div class="input-cell">
+              <input type="text" [(ngModel)]="form.pincode" name="pincode" placeholder="PIN CODE" maxlength="6" class="erp-input" />
+            </div>
+            <div class="input-cell">
+              <select [(ngModel)]="form.stateName" name="stateName" class="erp-input">
+                <option value="">STATE</option>
+                @for (st of indianStates; track st) { <option [value]="st">{{ st }}</option> }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row row-2">
+            <div class="input-cell">
+              <input type="text" [(ngModel)]="form.phone" name="phone" placeholder="MOBILE NUMBER *" class="erp-input font-bold" />
+            </div>
+            <div class="input-cell">
+              <input type="email" [(ngModel)]="form.email" name="email" placeholder="EMAIL ADDRESS" class="erp-input" />
+            </div>
+          </div>
+
+          <div class="form-row row-full">
+            <input type="text" [(ngModel)]="form.otherInfo" name="otherInfo" placeholder="OTHER INFORMATION" class="erp-input" />
+          </div>
+
+        </div>
+      </fieldset>
+
+      <!-- Right Column: CUSTOMER IMAGE & KYC DOCUMENTS -->
+      <fieldset class="form-section kyc-section">
+        <legend class="section-legend">CUSTOMER IMAGE</legend>
+        <div class="section-body kyc-body">
+
+          <!-- 1. Profile Avatar Box -->
+          <div class="photo-preview-card">
+            @if (form.photoBase64) {
+              <img [src]="resolveImageUrl(form.photoBase64)" alt="Customer Profile" class="avatar-preview-img" />
+            } @else {
+              <div class="avatar-placeholder">
+                <svg viewBox="0 0 100 100" class="avatar-svg" fill="currentColor">
+                  <circle cx="50" cy="35" r="22" fill="#FFA760" />
+                  <path d="M15 90 C15 65 30 55 50 55 C70 55 85 65 85 90 Z" fill="#2E86DE" />
+                  <circle cx="76" cy="65" r="14" fill="#FBC531" />
+                  <line x1="76" y1="57" x2="76" y2="73" stroke="#222" stroke-width="3" stroke-linecap="round" />
+                  <line x1="68" y1="65" x2="84" y2="65" stroke="#222" stroke-width="3" stroke-linecap="round" />
+                </svg>
+              </div>
+            }
+
+            <div class="photo-button-row">
+              <button type="button" class="btn-webcam" (click)="openWebcam('photo')">WEBCAM</button>
+              <label class="btn-computer">
+                Upload
+                <input type="file" accept="image/*" (change)="onFileSelected($event, 'photo')" hidden />
+              </label>
+            </div>
+          </div>
+
+          <!-- 2. ADD NEW USER SMS Button -->
+          <button
+            type="button"
+            class="btn-sms"
+            [class.active]="form.sendWelcomeSms"
+            (click)="form.sendWelcomeSms = !form.sendWelcomeSms"
+          >
+            {{ form.sendWelcomeSms ? '✓ ADD NEW USER SMS (ENABLED)' : 'ADD NEW USER SMS' }}
+          </button>
+
+          <!-- 3. ADHAAR FRONT SIDE Box -->
+          <div class="kyc-doc-card">
+            <div class="doc-preview-area">
+              @if (form.aadhaarFrontBase64) {
+                <img [src]="resolveImageUrl(form.aadhaarFrontBase64)" alt="Aadhaar Front" class="doc-preview-img" />
+              } @else {
+                <div class="doc-placeholder-icon">
+                  <svg viewBox="0 0 64 64" width="48" height="48">
+                    <rect x="6" y="10" width="52" height="40" rx="4" fill="#00D2D3" />
+                    <circle cx="22" cy="24" r="6" fill="#FECA57" />
+                    <polygon points="12,42 28,26 40,36 48,28 54,42" fill="#10AC84" />
+                    <circle cx="50" cy="46" r="10" fill="#0ABDE3" />
+                    <line x1="50" y1="40" x2="50" y2="52" stroke="#FFF" stroke-width="2.5" />
+                    <line x1="44" y1="46" x2="56" y2="46" stroke="#FFF" stroke-width="2.5" />
+                  </svg>
+                </div>
+              }
+            </div>
+
+            <div class="doc-actions-row">
+              <label class="btn-kyc-action">
+                Computer
+                <input type="file" accept="image/*" (change)="onFileSelected($event, 'aadhaarFront')" hidden />
+              </label>
+              <button type="button" class="btn-kyc-action" (click)="openWebcam('aadhaarFront')">Webcam</button>
+            </div>
+
+            <input
+              type="text"
+              [(ngModel)]="form.aadhaarFrontDesc"
+              name="aadhaarFrontDesc"
+              placeholder="IMAGE DESCRIPTION"
+              class="erp-input doc-desc-input"
+            />
+            <strong class="doc-card-title">ADHAAR FRONT SIDE</strong>
+          </div>
+
+          <!-- 4. ADHAAR BACK SIDE Box -->
+          <div class="kyc-doc-card">
+            <div class="doc-preview-area">
+              @if (form.aadhaarBackBase64) {
+                <img [src]="resolveImageUrl(form.aadhaarBackBase64)" alt="Aadhaar Back" class="doc-preview-img" />
+              } @else {
+                <div class="doc-placeholder-icon">
+                  <svg viewBox="0 0 64 64" width="48" height="48">
+                    <rect x="6" y="10" width="52" height="40" rx="4" fill="#00D2D3" />
+                    <circle cx="22" cy="24" r="6" fill="#FECA57" />
+                    <polygon points="12,42 28,26 40,36 48,28 54,42" fill="#10AC84" />
+                    <circle cx="50" cy="46" r="10" fill="#0ABDE3" />
+                    <line x1="50" y1="40" x2="50" y2="52" stroke="#FFF" stroke-width="2.5" />
+                    <line x1="44" y1="46" x2="56" y2="46" stroke="#FFF" stroke-width="2.5" />
+                  </svg>
+                </div>
+              }
+            </div>
+
+            <div class="doc-actions-row">
+              <label class="btn-kyc-action">
+                Computer
+                <input type="file" accept="image/*" (change)="onFileSelected($event, 'aadhaarBack')" hidden />
+              </label>
+              <button type="button" class="btn-kyc-action" (click)="openWebcam('aadhaarBack')">Webcam</button>
+            </div>
+
+            <input
+              type="text"
+              [(ngModel)]="form.aadhaarBackDesc"
+              name="aadhaarBackDesc"
+              placeholder="IMAGE DESCRIPTION"
+              class="erp-input doc-desc-input"
+            />
+            <strong class="doc-card-title">ADHAAR BACK SIDE</strong>
+          </div>
+
+        </div>
+      </fieldset>
+
+    </div>
+
+    <!-- Final Submission Bar -->
+    <div class="footer-actions-bar">
+      <button type="button" class="btn btn-secondary btn-lg" (click)="resetForm()">Reset Form</button>
+      <button type="button" class="btn btn-primary btn-lg" [disabled]="isSaving()" (click)="saveCustomer()">
+        {{ isSaving() ? 'Saving Customer...' : (isEdit() ? 'Update Customer Record' : 'Save Customer Record') }}
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<!-- Webcam Capture Modal -->
+@if (webcamOpen()) {
+  <div class="webcam-modal-backdrop" (click)="stopWebcam()">
+    <div class="webcam-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Capture Photo via Webcam</h3>
+        <button type="button" class="close-btn" (click)="stopWebcam()">✕</button>
+      </div>
+      <div class="video-container">
+        <video #videoElement autoplay playsinline muted></video>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="stopWebcam()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="captureWebcam()">Snap & Use Photo</button>
+      </div>
+    </div>
+  </div>
+}
+

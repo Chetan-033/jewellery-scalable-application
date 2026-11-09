@@ -3,7 +3,9 @@ package com.jewellery.erp.masterdata.api;
 import com.jewellery.erp.masterdata.application.MasterDataService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,6 +26,18 @@ public class MasterDataController {
     @PostMapping("/customers")
     public MasterDataDtos.CustomerResponse createCustomer(@Valid @RequestBody MasterDataDtos.CustomerRequest request) {
         return masterDataService.createCustomer(request);
+    }
+
+    @GetMapping("/customers/{id}")
+    public MasterDataDtos.CustomerResponse getCustomer(@PathVariable String id) {
+        return masterDataService.getCustomer(id);
+    }
+
+    @PutMapping("/customers/{id}")
+    public MasterDataDtos.CustomerResponse updateCustomer(
+            @PathVariable String id,
+            @Valid @RequestBody MasterDataDtos.CustomerRequest request) {
+        return masterDataService.updateCustomer(id, request);
     }
 
     @GetMapping("/customers")

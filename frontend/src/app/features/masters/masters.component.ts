@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 interface Customer {
   id: string; code: string; name: string; phone?: string; city?: string;
   firstName?: string; lastName?: string; spouseName?: string; fatherName?: string;
-  address?: string;
+  address?: string; photoBase64?: string;
 }
 
 interface Metal { id: string; code: string; name: string; symbol?: string; }
@@ -96,5 +96,14 @@ export class MastersComponent implements OnInit {
 
   metalName(metalId: string): string {
     return this.metals().find((m) => m.id === metalId)?.name || metalId;
+  }
+
+  resolveImageUrl(url: string | undefined): string {
+    if (!url) return '';
+    if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+    const serverOrigin = environment.apiBaseUrl.replace(/\/api\/v1\/?$/, '');
+    return url.startsWith('/') ? `${serverOrigin}${url}` : `${serverOrigin}/${url}`;
   }
 }
