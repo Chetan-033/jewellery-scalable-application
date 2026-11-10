@@ -11,11 +11,13 @@ import com.jewellery.erp.masterdata.repository.PurityRepository;
 import com.jewellery.erp.masterdata.repository.SupplierRepository;
 import com.jewellery.erp.organization.application.DocumentNumberService;
 import com.jewellery.erp.shared.domain.BusinessException;
-import com.jewellery.erp.shared.domain.MoneyMath;
 import com.jewellery.erp.shared.domain.NotFoundException;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,22 +29,89 @@ public class MasterDataService {
     private final PurityRepository purityRepository;
     private final SupplierRepository supplierRepository;
     private final DocumentNumberService documentNumberService;
+    private final CustomerDocumentStorageService storageService;
 
     public MasterDataService(
             CustomerRepository customerRepository,
             MetalRepository metalRepository,
             PurityRepository purityRepository,
             SupplierRepository supplierRepository,
-            DocumentNumberService documentNumberService) {
+            DocumentNumberService documentNumberService,
+            CustomerDocumentStorageService storageService) {
         this.customerRepository = customerRepository;
         this.metalRepository = metalRepository;
         this.purityRepository = purityRepository;
         this.supplierRepository = supplierRepository;
         this.documentNumberService = documentNumberService;
+        this.storageService = storageService;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    @Transactional
+    public void migrateLegacyBase64Images() {
+        List<Customer> customers = customerRepository.findAll();
+        for (Customer c : customers) {
+            boolean updated = false;
+            if (c.getPhotoBase64() != null && c.getPhotoBase64().startsWith("data:")) {
+                c.setPhotoBase64(storageService.saveIfBase64(c.getId() + "_photo", c.getPhotoBase64()));
+                updated = true;
+            }
+            if (c.getAadhaarFrontBase64() != null && c.getAadhaarFrontBase64().startsWith("data:")) {
+                c.setAadhaarFrontBase64(storageService.saveIfBase64(c.getId() + "_aadhaar_front", c.getAadhaarFrontBase64()));
+                updated = true;
+            }
+            if (c.getAadhaarBackBase64() != null && c.getAadhaarBackBase64().startsWith("data:")) {
+                c.setAadhaarBackBase64(storageService.saveIfBase64(c.getId() + "_aadhaar_back", c.getAadhaarBackBase64()));
+                updated = true;
+            }
+            if (updated) {
+                customerRepository.save(c);
+            }
+        }
     }
 
     @Transactional
     public MasterDataDtos.CustomerResponse createCustomer(MasterDataDtos.CustomerRequest request) {
+        String code = trim(request.code());
+        if (code == null || code.isBlank()) {
+            code = documentNumberService.next("CUSTOMER");
+        } else if (customerRepository.existsByCode(code)) {
+            throw new BusinessException("CUSTOMER_CODE_EXISTS", "Customer code already exists: " + code);
+        }
+
+        Customer customer = new Customer();
+        customer.setId(UUID.randomUUID().toString());
+        customer.setCode(code);
+        applyCustomerFields(customer, request);
+        customerRepository.save(customer);
+        return toCustomer(customer);
+    }
+
+    @Transactional
+    public MasterDataDtos.CustomerResponse updateCustomer(String id, MasterDataDtos.CustomerRequest request) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Customer not found: " + id));
+        applyCustomerFields(customer, request);
+        customerRepository.save(customer);
+        return toCustomer(customer);
+    }
+
+    @Transactional(readOnly = true)
+    public MasterDataDtos.CustomerResponse getCustomer(String id) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Customer not found: " + id));
+        return toCustomer(customer);
+    }
+
+    @Transactional(readOnly = true)
+    public List<MasterDataDtos.CustomerResponse> listCustomers(String q) {
+        List<Customer> rows = (q == null || q.isBlank())
+                ? customerRepository.findAll()
+                : customerRepository.search(q.trim());
+        return rows.stream().map(this::toCustomer).toList();
+    }
+
+    private void applyCustomerFields(Customer customer, MasterDataDtos.CustomerRequest request) {
         String first = trim(request.firstName());
         String last = trim(request.lastName());
         String name = trim(request.name());
@@ -52,16 +121,6 @@ public class MasterDataService {
         if (name == null || name.isBlank()) {
             throw new BusinessException("CUSTOMER_NAME_REQUIRED", "Customer name or first/last name is required");
         }
-        String code = trim(request.code());
-        if (code == null || code.isBlank()) {
-            code = documentNumberService.next("CUSTOMER");
-        } else if (customerRepository.existsByCode(code)) {
-            throw new BusinessException("CUSTOMER_CODE_EXISTS", "Customer code already exists");
-        }
-
-        Customer customer = new Customer();
-        customer.setId(UUID.randomUUID().toString());
-        customer.setCode(code);
         customer.setName(name);
         customer.setFirstName(first);
         customer.setLastName(last);
@@ -82,16 +141,53 @@ public class MasterDataService {
         customer.setAadhaarNo(trim(request.aadhaarNo()));
         String country = trim(request.countryName());
         customer.setCountryName(country == null || country.isBlank() ? "India" : country);
-        customerRepository.save(customer);
-        return toCustomer(customer);
-    }
 
-    @Transactional(readOnly = true)
-    public List<MasterDataDtos.CustomerResponse> listCustomers(String q) {
-        List<Customer> rows = (q == null || q.isBlank())
-                ? customerRepository.findAll()
-                : customerRepository.search(q.trim());
-        return rows.stream().map(this::toCustomer).toList();
+        customer.setHos(trim(request.hos()));
+        customer.setAccountGroup(trim(request.accountGroup()));
+        customer.setRelationType(trim(request.relationType()));
+        customer.setMotherName(trim(request.motherName()));
+        customer.setDob(trim(request.dob()));
+        customer.setSpouseDob(trim(request.spouseDob()));
+        customer.setCaste(trim(request.caste()));
+        customer.setQualification(trim(request.qualification()));
+        customer.setMaritalStatus(trim(request.maritalStatus()));
+        customer.setAnniversaryDate(trim(request.anniversaryDate()));
+        customer.setTaxNo(trim(request.taxNo()));
+        customer.setBankName(trim(request.bankName()));
+        customer.setBankAccName(trim(request.bankAccName()));
+        customer.setBankAccNo(trim(request.bankAccNo()));
+        customer.setBankIfscCode(trim(request.bankIfscCode()));
+        customer.setOccupation(trim(request.occupation()));
+        customer.setAnnualIncome(trim(request.annualIncome()));
+        customer.setNomineeName(trim(request.nomineeName()));
+        customer.setNomineeRelation(trim(request.nomineeRelation()));
+        customer.setDesignation(trim(request.designation()));
+        customer.setLoginId(trim(request.loginId()));
+        customer.setPortalPassword(trim(request.portalPassword()));
+        customer.setMasterPassword(trim(request.masterPassword()));
+        customer.setBusinessName(trim(request.businessName()));
+        customer.setOfficeAddress(trim(request.officeAddress()));
+        customer.setPermanentAddress(trim(request.permanentAddress()));
+        customer.setCurrentAddress(trim(request.currentAddress()));
+        customer.setShippingAddress(trim(request.shippingAddress()));
+        customer.setWardNumber(trim(request.wardNumber()));
+        customer.setTehsil(trim(request.tehsil()));
+        customer.setOtherInfo(trim(request.otherInfo()));
+
+        // Decodes base64 data URL and writes to disk file, storing only short URL path in database
+        if (request.photoBase64() != null) {
+            customer.setPhotoBase64(storageService.saveIfBase64(customer.getId() + "_photo", request.photoBase64()));
+        }
+        if (request.aadhaarFrontBase64() != null) {
+            customer.setAadhaarFrontBase64(storageService.saveIfBase64(customer.getId() + "_aadhaar_front", request.aadhaarFrontBase64()));
+        }
+        customer.setAadhaarFrontDesc(trim(request.aadhaarFrontDesc()));
+        if (request.aadhaarBackBase64() != null) {
+            customer.setAadhaarBackBase64(storageService.saveIfBase64(customer.getId() + "_aadhaar_back", request.aadhaarBackBase64()));
+        }
+        customer.setAadhaarBackDesc(trim(request.aadhaarBackDesc()));
+        if (request.sendWelcomeSms() != null) customer.setSendWelcomeSms(request.sendWelcomeSms());
+        customer.setUpdatedAt(Instant.now());
     }
 
     @Transactional
@@ -118,13 +214,13 @@ public class MasterDataService {
         metalRepository.findById(request.metalId())
                 .orElseThrow(() -> new NotFoundException("Metal not found"));
         if (purityRepository.findByMetalIdAndLabel(request.metalId(), request.label()).isPresent()) {
-            throw new BusinessException("PURITY_EXISTS", "Purity label already exists for metal");
+            throw new BusinessException("PURITY_EXISTS", "Purity label already exists for this metal");
         }
         Purity purity = new Purity();
         purity.setId(UUID.randomUUID().toString());
         purity.setMetalId(request.metalId());
         purity.setLabel(request.label().trim());
-        purity.setFineness(MoneyMath.purity(request.fineness()));
+        purity.setFineness(request.fineness());
         purityRepository.save(purity);
         return toPurity(purity);
     }
@@ -167,7 +263,16 @@ public class MasterDataService {
                 c.getId(), c.getCode(), c.getName(), c.getFirstName(), c.getLastName(), c.getFatherName(),
                 c.getPhone(), c.getEmail(), c.getGstin(), c.getCity(), c.getAddress(), c.getStatus(),
                 c.getTitle(), c.getGender(), c.getSpouseName(), c.getAltPhone(), c.getStateName(),
-                c.getVillage(), c.getPincode(), c.getPanNo(), c.getAadhaarNo(), c.getCountryName()
+                c.getVillage(), c.getPincode(), c.getPanNo(), c.getAadhaarNo(), c.getCountryName(),
+                c.getHos(), c.getAccountGroup(), c.getRelationType(), c.getMotherName(), c.getDob(),
+                c.getSpouseDob(), c.getCaste(), c.getQualification(), c.getMaritalStatus(), c.getAnniversaryDate(),
+                c.getTaxNo(), c.getBankName(), c.getBankAccName(), c.getBankAccNo(), c.getBankIfscCode(),
+                c.getOccupation(), c.getAnnualIncome(), c.getNomineeName(), c.getNomineeRelation(),
+                c.getDesignation(), c.getLoginId(), c.getPortalPassword(), c.getMasterPassword(),
+                c.getBusinessName(), c.getOfficeAddress(), c.getPermanentAddress(), c.getCurrentAddress(),
+                c.getShippingAddress(), c.getWardNumber(), c.getTehsil(), c.getOtherInfo(),
+                c.getPhotoBase64(), c.getAadhaarFrontBase64(), c.getAadhaarFrontDesc(),
+                c.getAadhaarBackBase64(), c.getAadhaarBackDesc(), c.getSendWelcomeSms()
         );
     }
 

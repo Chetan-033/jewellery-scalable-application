@@ -6,6 +6,8 @@ import { LoginComponent } from './features/login/login.component';
 import { ShellComponent } from './layout/shell.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { MastersComponent } from './features/masters/masters.component';
+import { CustomerFormComponent } from './features/masters/customer-form/customer-form.component';
+import { CustomerDashboardComponent } from './features/customers/customer-dashboard/customer-dashboard.component';
 import { RatesComponent } from './features/rates/rates.component';
 import { InventoryComponent } from './features/inventory/inventory.component';
 import { SalesComponent } from './features/sales/sales.component';
@@ -34,6 +36,11 @@ export const routes: Routes = [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', component: DashboardComponent },
       { path: 'masters', component: MastersComponent },
+      { path: 'masters/customers/add', component: CustomerFormComponent },
+      { path: 'masters/customers/:id/edit', component: CustomerFormComponent },
+      { path: 'masters/customers/:id', component: CustomerDashboardComponent },
+      { path: 'customers/:id', component: CustomerDashboardComponent },
+      { path: 'customers/:id/dashboard', component: CustomerDashboardComponent },
       { path: 'rates', component: RatesComponent },
       { path: 'inventory', component: InventoryComponent },
       { path: 'sales', component: SalesComponent },

@@ -1,0 +1,2066 @@
+<div class="customer-dashboard-page">
+
+  <!-- 1. CUSTOMER PROFILE HEADER -->
+  @if (customer(); as c) {
+    <header class="customer-hero-card">
+      <div class="hero-main">
+        <div class="avatar-container">
+          @if (c.photoBase64) {
+            <img [src]="resolveImageUrl(c.photoBase64)" alt="{{ c.name }}" class="hero-avatar-img" />
+          } @else {
+            <div class="hero-avatar-placeholder">
+              {{ (c.firstName || c.name || '?').charAt(0) }}
+            </div>
+          }
+        </div>
+
+        <div class="hero-info">
+          <div class="hero-name-row">
+            <h1>{{ c.title || '' }} {{ c.name }}</h1>
+            <span class="customer-code-pill">Cust ID: {{ c.code }}</span>
+            <span class="account-group-pill">{{ c.accountGroup || 'Sundry Debtors' }}</span>
+          </div>
+
+          <div class="hero-meta-row">
+            @if (c.phone) {
+              <span class="meta-item"><i class="icon">📞</i> {{ c.phone }}</span>
+            }
+            @if (c.city) {
+              <span class="meta-item"><i class="icon">📍</i> {{ c.city }}{{ c.stateName ? ', ' + c.stateName : '' }}</span>
+            }
+            @if (c.panNo) {
+              <span class="meta-item"><i class="icon">🪪</i> PAN: <strong>{{ c.panNo }}</strong></span>
+            }
+            @if (c.aadhaarNo) {
+              <span class="meta-item"><i class="icon">🆔</i> Aadhaar: <strong>{{ c.aadhaarNo }}</strong></span>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-quick-stats">
+        <div class="stat-bubble">
+          <span class="stat-label">Active Loans</span>
+          <strong class="stat-value text-emerald">{{ activeLoansCount }}</strong>
+        </div>
+        <div class="stat-bubble">
+          <span class="stat-label">Pledged Net Wt</span>
+          <strong class="stat-value">{{ totalPledgedNetWeight | number:'1.2-2' }} g</strong>
+        </div>
+        <a [routerLink]="['/app/masters/customers', c.id, 'edit']" class="btn-edit-profile" title="Edit Customer Profile">
+          ✎ Edit Profile
+        </a>
+      </div>
+    </header>
+  }
+
+  <!-- 2. MODERN NAVIGATION TAB BAR (Matches user's reference with modern aesthetic) -->
+  <nav class="customer-subnav-bar">
+    <div class="subnav-left">
+      <button
+        type="button"
+        class="nav-tab"
+        [class.active]="activeTab() === 'overview'"
+        (click)="activeTab.set('overview'); closeAddLoan()"
+      >
+        <span class="tab-icon">⌂</span> Overview
+      </button>
+
+      <button
+        type="button"
+        class="nav-tab"
+        [class.active]="activeTab() === 'loans'"
+        (click)="activeTab.set('loans')"
+      >
+        <span class="tab-icon">◈</span> Loans / Girvi
+        @if (activeLoansCount > 0) {
+          <span class="tab-badge">{{ activeLoansCount }}</span>
+        }
+      </button>
+
+      <a [routerLink]="['/app/sales']" [queryParams]="{ customerId: customer()?.id }" class="nav-tab">
+        <span class="tab-icon">◆</span> Sell
+      </a>
+
+      <a [routerLink]="['/app/purchase']" [queryParams]="{ customerId: customer()?.id }" class="nav-tab">
+        <span class="tab-icon">◇</span> Purchase
+      </a>
+
+      <a [routerLink]="['/app/orders']" [queryParams]="{ customerId: customer()?.id }" class="nav-tab">
+        <span class="tab-icon">▤</span> Orders
+      </a>
+
+      <a [routerLink]="['/app/credit']" [queryParams]="{ customerId: customer()?.id }" class="nav-tab">
+        <span class="tab-icon">◎</span> Udhaar / Credit
+      </a>
+    </div>
+
+    <div class="subnav-right" style="display:flex; align-items:center; gap:0.6rem;">
+      <!-- Loans Filter Dropdown (Matches Image 1: LOANS ▾) -->
+      <div class="dropdown-loans-wrapper" style="position:relative; display:inline-block;">
+        <button
+          type="button"
+          class="btn-loans-dropdown"
+          (click)="isLoanDropdownOpen.set(!isLoanDropdownOpen())"
+          title="Filter and browse customer loans"
+          style="display:flex; align-items:center; gap:0.35rem; padding:0.45rem 0.85rem; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; font-weight:700; font-size:0.85rem; color:#1e293b; cursor:pointer;"
+        >
+          <span>LOANS ▾</span>
+          @if (activeLoansCount > 0) {
+            <span style="background:#0284c7; color:#fff; font-size:0.7rem; padding:0.1rem 0.4rem; border-radius:10px;">{{ activeLoansCount }}</span>
+          }
+        </button>
+
+        @if (isLoanDropdownOpen()) {
+          <div
+            class="loans-dropdown-menu"
+            (click)="$event.stopPropagation()"
+            style="position:absolute; right:0; top:calc(100% + 4px); background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 10px 25px rgba(0,0,0,0.12); min-width:185px; z-index:100; overflow:hidden;"
+          >
+            <div style="padding:0.5rem 0.75rem; font-size:0.72rem; font-weight:700; color:#64748b; background:#f8fafc; border-bottom:1px solid #e2e8f0; text-transform:uppercase;">
+              Filter Customer Loans
+            </div>
+            <button
+              type="button"
+              style="display:flex; align-items:center; justify-content:space-between; width:100%; padding:0.6rem 0.75rem; background:none; border:none; text-align:left; font-size:0.82rem; font-weight:600; color:#1e293b; cursor:pointer;"
+              [style.background]="loanFilter() === 'ALL' ? '#f0f9ff' : 'transparent'"
+              (click)="loanFilter.set('ALL'); isLoanDropdownOpen.set(false); activeTab.set('loans')"
+            >
+              <span>📑 All Loans</span>
+              <span style="font-size:0.75rem; color:#64748b;">{{ loans().length }}</span>
+            </button>
+            <button
+              type="button"
+              style="display:flex; align-items:center; justify-content:space-between; width:100%; padding:0.6rem 0.75rem; background:none; border:none; text-align:left; font-size:0.82rem; font-weight:600; color:#1e293b; cursor:pointer;"
+              [style.background]="loanFilter() === 'ACTIVE' ? '#ecfdf5' : 'transparent'"
+              (click)="loanFilter.set('ACTIVE'); isLoanDropdownOpen.set(false); activeTab.set('loans')"
+            >
+              <span>🟢 Active Loans</span>
+              <span style="font-size:0.75rem; color:#059669; font-weight:700;">{{ activeLoansCount }}</span>
+            </button>
+            <button
+              type="button"
+              style="display:flex; align-items:center; justify-content:space-between; width:100%; padding:0.6rem 0.75rem; background:none; border:none; text-align:left; font-size:0.82rem; font-weight:600; color:#1e293b; cursor:pointer;"
+              [style.background]="loanFilter() === 'RELEASED' ? '#f1f5f9' : 'transparent'"
+              (click)="loanFilter.set('RELEASED'); isLoanDropdownOpen.set(false); activeTab.set('loans')"
+            >
+              <span>🏁 Settled / Released</span>
+              <span style="font-size:0.75rem; color:#64748b;">{{ loans().length - activeLoansCount }}</span>
+            </button>
+          </div>
+        }
+      </div>
+
+      <button
+        type="button"
+        class="btn-cta-loan"
+        [class.active]="isAddLoanOpen()"
+        (click)="isAddLoanOpen() ? closeAddLoan() : openAddLoan()"
+        title="Add new loan"
+      >
+        <span class="plus-icon">+</span> {{ isAddLoanOpen() ? 'Close Form' : 'LOAN' }}
+      </button>
+    </div>
+  </nav>
+
+  <!-- Notification Banner -->
+  @if (message()) {
+    <div class="dashboard-alert" [class.success]="message()?.type === 'success'" [class.error]="message()?.type === 'error'">
+      <span>{{ message()?.text }}</span>
+      <button type="button" class="close-alert-btn" (click)="message.set(null)">✕</button>
+    </div>
+  }
+
+  <!-- 3. ADD NEW LOAN / GIRVI FORM PANEL (Modern UI corresponding to Image 2) -->
+  @if (isAddLoanOpen()) {
+    <section class="add-loan-panel modern-card">
+      <div class="panel-header-row">
+        <div>
+          <h2>Add New Girvi / Gold Loan</h2>
+          <p class="panel-subtitle">Create secured or unsecured loan with pledged jewellery items and live interest accrual.</p>
+        </div>
+        <button type="button" class="btn-icon-close" (click)="closeAddLoan()">✕</button>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submitLoan()">
+
+        <!-- Section A: Loan Terms & General Info -->
+        <div class="loan-terms-grid">
+          <div class="input-field principal-field">
+            <label>PRINCIPAL AMOUNT (₹) *</label>
+            <div class="currency-input-wrap">
+              <span class="currency-symbol">₹</span>
+              <input
+                type="number"
+                step="0.01"
+                [(ngModel)]="loanForm.principalAmount"
+                name="principalAmount"
+                placeholder="0.00"
+                class="form-control-lg principal-input"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="input-field">
+            <label>INTEREST FREQUENCY</label>
+            <select [(ngModel)]="loanForm.interestType" name="interestType" class="form-control">
+              <option value="MONTHLY">Monthly (Per Month)</option>
+              <option value="YEARLY">Yearly (Annual)</option>
+              <option value="DAILY">Daily</option>
+            </select>
+          </div>
+
+          <div class="input-field">
+            <label>RATE OF INTEREST (%) *</label>
+            <div class="suffix-input-wrap">
+              <input
+                type="number"
+                step="0.01"
+                [(ngModel)]="loanForm.roiPercent"
+                name="roiPercent"
+                placeholder="2.5"
+                class="form-control"
+                required
+              />
+              <span class="input-suffix">%</span>
+            </div>
+          </div>
+
+          <div class="input-field">
+            <label>LOAN START DATE</label>
+            <input type="date" [(ngModel)]="loanForm.openDate" name="openDate" class="form-control" />
+          </div>
+
+          <div class="input-field">
+            <label>LOAN TYPE</label>
+            <select [(ngModel)]="loanForm.loanType" name="loanType" class="form-control" (ngModelChange)="onLoanTypeChange()">
+              <option value="SECURED">Secured Loan (Gold / Silver)</option>
+              <option value="UNSECURED">Unsecured Loan</option>
+            </select>
+          </div>
+
+          @if (loanForm.loanType !== 'UNSECURED') {
+            <div class="input-field">
+              <label>PACKET NO.</label>
+              <input type="text" [(ngModel)]="loanForm.packetNo" name="packetNo" placeholder="e.g. PKT-001" class="form-control" />
+            </div>
+
+            <div class="input-field">
+              <label>STORAGE BOX / LOCKER</label>
+              <input type="text" [(ngModel)]="loanForm.boxNo" name="boxNo" placeholder="e.g. Safe-A, Box-12" class="form-control" />
+            </div>
+          }
+
+          <div class="input-field toggle-field">
+            <label>FIRST MONTH INTEREST</label>
+            <label class="switch-control">
+              <input type="checkbox" [(ngModel)]="loanForm.firstMonthInterest" name="firstMonthInterest" />
+              <span class="switch-slider"></span>
+              <span class="switch-label">{{ loanForm.firstMonthInterest ? 'Deducted in advance' : 'Accrue normally' }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section B: Pledged Items Table (Itemized Jewels - Only for Secured Loans) -->
+        @if (loanForm.loanType !== 'UNSECURED') {
+          <div class="pledged-items-container">
+            <div class="items-header-row">
+              <h3>PLEDGED JEWELLERY ITEMS</h3>
+              <button type="button" class="btn-add-item" (click)="addPledgedItem()">
+                + Add Item Row
+              </button>
+            </div>
+
+            <div class="table-responsive">
+              <table class="pledged-table">
+                <thead>
+                  <tr>
+                    <th style="width: 40px">#</th>
+                    <th style="width: 110px">METAL</th>
+                    <th style="min-width: 200px">ITEM DESCRIPTION</th>
+                    <th style="width: 70px">QTY</th>
+                    <th style="width: 100px">GROSS WT (g)</th>
+                    <th style="width: 90px">LESS WT (g)</th>
+                    <th style="width: 100px">NET WT (g)</th>
+                    <th style="width: 90px">TUNCH %</th>
+                    <th style="width: 100px">FINE WT (g)</th>
+                    <th style="width: 130px">VALUATION (₹)</th>
+                    <th style="width: 110px">PHOTO</th>
+                    <th style="width: 40px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of loanForm.items; track $index; let i = $index) {
+                    <tr>
+                      <td class="text-center font-muted">{{ i + 1 }}</td>
+                      <td>
+                        <select [(ngModel)]="item.metalType" [name]="'metalType_' + i" class="table-input">
+                          @for (m of metalTypes; track m) { <option [value]="m">{{ m }}</option> }
+                        </select>
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          [(ngModel)]="item.itemName"
+                          [name]="'itemName_' + i"
+                          placeholder="e.g. 22K Gold Chain, Ring"
+                          class="table-input"
+                          required
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min="1"
+                          [(ngModel)]="item.quantity"
+                          [name]="'qty_' + i"
+                          class="table-input text-center"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          step="0.0001"
+                          [(ngModel)]="item.grossWeight"
+                          [name]="'grossWeight_' + i"
+                          (ngModelChange)="onItemWeightChange(item)"
+                          placeholder="0.0000"
+                          class="table-input text-right"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          step="0.0001"
+                          [(ngModel)]="item.lessWeight"
+                          [name]="'lessWeight_' + i"
+                          (ngModelChange)="onItemWeightChange(item)"
+                          placeholder="0.0000"
+                          class="table-input text-right"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          step="0.0001"
+                          [(ngModel)]="item.netWeight"
+                          [name]="'netWeight_' + i"
+                          readonly
+                          class="table-input text-right bg-highlight"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          step="0.01"
+                          [(ngModel)]="item.purityPercent"
+                          [name]="'purity_' + i"
+                          (ngModelChange)="onItemWeightChange(item)"
+                          placeholder="91.6"
+                          class="table-input text-right"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          step="0.0001"
+                          [(ngModel)]="item.fineWeight"
+                          [name]="'fineWeight_' + i"
+                          readonly
+                          class="table-input text-right bg-highlight"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          step="0.01"
+                          [(ngModel)]="item.valuationAmount"
+                          [name]="'val_' + i"
+                          placeholder="0.00"
+                          class="table-input text-right font-bold"
+                        />
+                      </td>
+                      <td class="photo-cell">
+                        @if (item.photoUrl) {
+                          <img [src]="resolveImageUrl(item.photoUrl)" alt="Item" class="item-thumb-preview" (click)="openItemWebcam(i)" />
+                        } @else {
+                          <div class="photo-btn-group">
+                            <button type="button" class="btn-micro" (click)="openItemWebcam(i)" title="Take Webcam Photo">📷</button>
+                            <label class="btn-micro" title="Upload from Computer">
+                              📁
+                              <input type="file" accept="image/*" (change)="onItemFileSelected($event, i)" hidden />
+                            </label>
+                          </div>
+                        }
+                      </td>
+                      <td class="text-center">
+                        @if (loanForm.items.length > 1) {
+                          <button type="button" class="btn-trash" (click)="removePledgedItem(i)" title="Remove item">✕</button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr class="totals-row">
+                    <td colspan="3" class="text-right font-bold">TOTALS:</td>
+                    <td class="text-center font-bold">{{ totalItemsCount }}</td>
+                    <td class="text-right font-bold">{{ totalGrossWeight | number:'1.3-3' }} g</td>
+                    <td class="text-right font-bold">{{ totalLessWeight | number:'1.3-3' }} g</td>
+                    <td class="text-right font-bold text-emerald">{{ totalNetWeight | number:'1.3-3' }} g</td>
+                    <td></td>
+                    <td class="text-right font-bold text-emerald">{{ totalFineWeight | number:'1.3-3' }} g</td>
+                    <td class="text-right font-bold text-emerald">₹{{ totalItemValuation | number:'1.2-2' }}</td>
+                    <td colspan="2"></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        }
+
+        <!-- Section C: Payment Details & Remarks -->
+        <div class="loan-footer-grid">
+          <div class="payment-modes-box">
+            <h4>DISBURSEMENT / PAYMENT MODE</h4>
+            <div class="pay-row">
+              <label>Cash in Hand</label>
+              <input type="number" step="0.01" [(ngModel)]="loanForm.cashAmount" name="cashAmount" placeholder="0.00" class="form-control" />
+              <input type="text" [(ngModel)]="loanForm.cashNarration" name="cashNarration" placeholder="Narration" class="form-control" />
+            </div>
+            <div class="pay-row">
+              <label>Bank Account</label>
+              <input type="number" step="0.01" [(ngModel)]="loanForm.bankAmount" name="bankAmount" placeholder="0.00" class="form-control" />
+              <input type="text" [(ngModel)]="loanForm.bankNarration" name="bankNarration" placeholder="Cheque / RTGS / NEFT Ref" class="form-control" />
+            </div>
+            <div class="pay-row">
+              <label>Online / UPI</label>
+              <input type="number" step="0.01" [(ngModel)]="loanForm.onlineAmount" name="onlineAmount" placeholder="0.00" class="form-control" />
+              <input type="text" [(ngModel)]="loanForm.onlineNarration" name="onlineNarration" placeholder="UPI Ref / Txn ID" class="form-control" />
+            </div>
+          </div>
+
+          <div class="extra-details-box">
+            <h4>STORAGE & REMARKS</h4>
+            <div class="field-block">
+              <label>Item Storage Location</label>
+              <input type="text" [(ngModel)]="loanForm.itemLocation" name="itemLocation" placeholder="e.g. Strong Room Safe 3, Locker #12" class="form-control" />
+            </div>
+            <div class="field-block">
+              <label>Time Period (Months)</label>
+              <input type="number" [(ngModel)]="loanForm.timePeriodMonths" name="timePeriodMonths" placeholder="12" class="form-control" />
+            </div>
+            <div class="field-block">
+              <label>General Loan Remarks / Terms</label>
+              <textarea [(ngModel)]="loanForm.remarks" name="remarks" rows="2" placeholder="Any special notes or pledged conditions..." class="form-control"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Submission Actions -->
+        <div class="form-action-bar">
+          <button type="button" class="btn btn-secondary" (click)="closeAddLoan()">Cancel</button>
+          <div class="action-btn-group">
+            <button type="button" class="btn btn-primary" [disabled]="isSaving()" (click)="submitLoan(false)">
+              {{ isSaving() ? 'Saving Loan...' : 'Submit Loan' }}
+            </button>
+            <button type="button" class="btn btn-emerald" [disabled]="isSaving()" (click)="submitLoan(true)">
+              Submit & Print Receipt
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </section>
+  }
+
+  <!-- 4. ACTIVE & PAST LOANS LIST -->
+  @if (activeTab() === 'loans') {
+    <section class="loans-content-area">
+
+      <!-- 4.0 SUMMARY METRIC CARDS (Matches User's Dashboard Overview Image) -->
+      <div class="summary-cards-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:1rem; margin-bottom:1.5rem;">
+        <div class="metric-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:1.15rem 1.25rem; display:flex; align-items:center; gap:1rem; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <div style="width:44px; height:44px; border-radius:8px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:1.35rem;">📄</div>
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">ACTIVE LOANS</div>
+            <div style="font-size:1.6rem; font-weight:800; color:#0f172a; line-height:1.2;">{{ activeLoansCount }}</div>
+          </div>
+        </div>
+
+        <div class="metric-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:1.15rem 1.25rem; display:flex; align-items:center; gap:1rem; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <div style="width:44px; height:44px; border-radius:8px; background:#f0fdf4; display:flex; align-items:center; justify-content:center; font-size:1.35rem; color:#059669; font-weight:800;">₹</div>
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">TOTAL PRINCIPAL</div>
+            <div style="font-size:1.6rem; font-weight:800; color:#0f172a; line-height:1.2;">₹{{ totalActivePrincipal | number:'1.2-2' }}</div>
+          </div>
+        </div>
+
+        <div class="metric-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:1.15rem 1.25rem; display:flex; align-items:center; gap:1rem; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <div style="width:44px; height:44px; border-radius:8px; background:#fffbeb; display:flex; align-items:center; justify-content:center; font-size:1.35rem; color:#d97706;">📈</div>
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">ACCRUED INTEREST</div>
+            <div style="font-size:1.6rem; font-weight:800; color:#d97706; line-height:1.2;">₹{{ totalAccruedInterest | number:'1.2-2' }}</div>
+          </div>
+        </div>
+
+        <div class="metric-card" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:10px; padding:1.15rem 1.25rem; display:flex; align-items:center; gap:1rem; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+          <div style="width:44px; height:44px; border-radius:8px; background:#eff6ff; display:flex; align-items:center; justify-content:center; font-size:1.35rem; color:#2563eb;">⚖️</div>
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">TOTAL PLEDGED NET WT</div>
+            <div style="font-size:1.6rem; font-weight:800; color:#0f172a; line-height:1.2;">{{ totalPledgedNetWeight | number:'1.2-2' }} g</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4.1. ACTIVE LOAN / GIRVI DETAILS VIEW (Displayed immediately upon submit or selection - Matching User's Image) -->
+      @if (selectedLoan(); as loan) {
+        <section class="girvi-details-card modern-card">
+
+          <!-- ============================================================== -->
+          <!-- MODE 1: DEDICATED IN-PAGE LOAN RELEASE & SETTLEMENT VIEW       -->
+          <!-- Matches Image 8 & Image 9 (No popup modal, clean modern panel) -->
+          <!-- ============================================================== -->
+          @if (loanViewMode() === 'RELEASE') {
+            <div class="dedicated-release-panel">
+              <!-- 1. Header Bar (Image 8 Top) -->
+              <div class="rel-top-header">
+                <div class="rel-header-left">
+                  <span class="rel-header-icon">💰</span>
+                  <div class="rel-header-title-box">
+                    <h2 class="rel-panel-title">RELEASE ACTIVE LOAN / GIRVI PANEL</h2>
+                    <span class="rel-panel-sub">
+                      Ticket #{{ loan.ticketNo }} · Customer: <strong>{{ customer()?.name }}</strong> ({{ customer()?.code || 'CUST' }})
+                    </span>
+                  </div>
+                </div>
+
+                <div class="rel-header-right">
+                  <button type="button" class="btn-rel-header-nav" (click)="switchToReceiptView()">
+                    LOAN RECEIPT
+                  </button>
+                  <button type="button" class="btn-rel-header-nav" (click)="switchToDetailsView()">
+                    LOAN DETAILS
+                  </button>
+                  <button type="button" class="btn-rel-header-close" (click)="switchToDetailsView()" title="Close Release Panel">
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              <!-- 2. Main Top Config Box (Ivory/Cream dashed amber box - Image 8) -->
+              <div class="rel-config-dashed-box">
+                <!-- 5-col Row 1 -->
+                <div class="rel-config-grid-5">
+                  <div class="rel-cfg-col principal-hero-col">
+                    <label class="cfg-lbl">PRINCIPAL AMOUNT</label>
+                    <div class="cfg-val-box cfg-hero-principal">
+                      <span>{{ loan.principalAmount | number:'1.0-0' }}</span>
+                      <span class="cfg-info-ico" title="Disbursed Principal">ℹ</span>
+                    </div>
+                  </div>
+
+                  <div class="rel-cfg-col">
+                    <label class="cfg-lbl">LOAN DATE</label>
+                    <div class="cfg-val-box cfg-date-val">{{ loan.openDate | date:'dd MMM yyyy' }}</div>
+                  </div>
+
+                  <div class="rel-cfg-col">
+                    <label class="cfg-lbl">FIRM NAME</label>
+                    <div class="cfg-val-box">{{ firmName }}</div>
+                  </div>
+
+                  <div class="rel-cfg-col">
+                    <label class="cfg-lbl">LOAN SERIAL NO.</label>
+                    <div class="cfg-val-box font-bold">#{{ loan.ticketNo }}</div>
+                  </div>
+
+                  <div class="rel-cfg-col">
+                    <label class="cfg-lbl">MONTHLY INTEREST OPTION</label>
+                    <select
+                      [(ngModel)]="releaseForm.monthlyInterestOption"
+                      (change)="recalculateReleaseSettlement()"
+                      class="cfg-select"
+                    >
+                      <option value="DD">Default (DD) - Exact Days</option>
+                      <option value="FM">Full Month (FM) - Round Up</option>
+                      <option value="HM">Half Month (HM) - 15/30 Days</option>
+                      <option value="7D">7 Days Slab (7D)</option>
+                    </select>
+                  </div>
+
+                  <!-- 5-col Row 2 -->
+                  <div class="rel-cfg-col">
+                    <label class="cfg-lbl">RATE OF INTEREST</label>
+                    <div class="cfg-val-box text-amber font-bold">{{ loan.roiPercent }}% / {{ loan.interestType }}</div>
+                  </div>
+
+                  <div class="rel-cfg-col">
+                    <label class="cfg-lbl">SELECT RELEASED DATE</label>
+                    <input
+                      type="date"
+                      [(ngModel)]="releaseForm.releaseDate"
+                      (change)="recalculateReleaseSettlement()"
+                      class="cfg-date-input"
+                    />
+                  </div>
+
+                  <div class="rel-cfg-col">
+                    <label class="cfg-lbl">LOAN NO.</label>
+                    <div class="cfg-val-box">{{ loan.packetNo || loan.boxNo || '1' }}</div>
+                  </div>
+
+                  <div class="rel-cfg-col">
+                    <label class="cfg-lbl">INTEREST OPTION</label>
+                    <div class="cfg-val-box text-uppercase">{{ loan.interestType || 'Monthly' }}</div>
+                  </div>
+
+                  <div class="rel-cfg-col">
+                    <label class="cfg-lbl">SIMPLE / COMPOUND INTEREST</label>
+                    <div class="cfg-val-box">Simple Int</div>
+                  </div>
+                </div>
+
+                <!-- Center exchange icon & LOAN REL.NO. (Image 8) -->
+                <div class="rel-center-badge-row">
+                  <div class="rel-center-icon-wrap" title="Settlement Exchange">
+                    🏛️
+                  </div>
+                  <div class="rel-relno-card">
+                    <label class="relno-lbl">LOAN REL.NO.</label>
+                    <div class="relno-val">SID - {{ loan.ticketNo }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. Summary Strip (Image 8 Middle Table with Red Dotted Header) -->
+              <div class="rel-summary-wrap">
+                <div class="rel-summary-header-tag" [class.unsec]="loan.loanType === 'UNSECURED'">
+                  {{ loan.loanType === 'UNSECURED' ? 'UNSECURED LOAN' : 'SECURED LOAN' }}
+                </div>
+
+                <div class="table-responsive">
+                  <table class="rel-snapshot-table">
+                    <thead>
+                      <tr>
+                        <th>PRINCIPAL</th>
+                        <th>ROI</th>
+                        <th>S. INT</th>
+                        <th>DISC</th>
+                        <th>EXTRA AMT</th>
+                        <th>TOTAL</th>
+                        <th>START DATE</th>
+                        <th>END DATE</th>
+                        <th>TIME PERIOD</th>
+                        <th>VALUATION</th>
+                        <th>PROFIT/LOSS</th>
+                        <th>STATUS</th>
+                        <th>USER IMAGE</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="font-bold">₹{{ loan.principalAmount | number:'1.2-2' }}</td>
+                        <td>{{ loan.roiPercent }} %</td>
+                        <td class="text-amber font-bold">₹{{ releaseForm.accruedInterest | number:'1.2-2' }}</td>
+                        <td>{{ releaseForm.discountAmount ? ('₹' + (releaseForm.discountAmount | number:'1.2-2')) : '-' }}</td>
+                        <td>{{ releaseForm.extraAmount ? ('₹' + (releaseForm.extraAmount | number:'1.2-2')) : '-' }}</td>
+                        <td class="text-blue font-bold">₹{{ releaseForm.totalPayable | number:'1.2-2' }}</td>
+                        <td>{{ loan.openDate | date:'dd MMM yyyy' }}</td>
+                        <td>{{ releaseForm.releaseDate | date:'dd MMM yyyy' }}</td>
+                        <td>{{ releaseForm.daysElapsed }} Day ({{ releaseForm.monthsCharged }}m {{ releaseForm.daysCharged }}d)</td>
+                        <td>{{ loan.loanType === 'UNSECURED' ? 'UNSEC. LOAN' : ('₹' + (loan.valuationAmount | number:'1.2-2')) }}</td>
+                        <td class="text-emerald">{{ loan.loanType === 'UNSECURED' ? 'UNSEC. LOAN' : '+₹' + (releaseForm.accruedInterest | number:'1.2-2') }}</td>
+                        <td><span class="badge-active">{{ loan.status }}</span></td>
+                        <td class="text-center">
+                          @if (customer()?.photoBase64) {
+                            <img [src]="resolveImageUrl(customer()?.photoBase64)" class="rel-user-thumb" alt="Customer" />
+                          } @else {
+                            <span class="rel-avatar-fallback">{{ (customer()?.name || '?').charAt(0) }}</span>
+                          }
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- If Secured Loan, show pledged ornament custody handover list -->
+                @if (loan.loanType !== 'UNSECURED' && loan.items && loan.items.length) {
+                  <div class="rel-pledged-handover-box">
+                    <div class="handover-title-row">
+                      <h5>Pledged Ornaments Handover (Custody in {{ loan.boxNo || loan.itemLocation || 'Safe Locker' }})</h5>
+                      <span class="handover-pill">Handover Upon Receipt</span>
+                    </div>
+                    <table class="handover-table">
+                      <thead>
+                        <tr>
+                          <th>Item Description</th>
+                          <th>Metal</th>
+                          <th class="text-center">Qty</th>
+                          <th class="text-right">Gross Wt</th>
+                          <th class="text-right">Net Wt</th>
+                          <th class="text-right">Fine Wt</th>
+                          <th class="text-right">Valuation</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (it of loan.items; track $index) {
+                          <tr>
+                            <td class="font-bold">{{ it.itemName }}</td>
+                            <td><span class="metal-pill">{{ it.metalType }}</span></td>
+                            <td class="text-center">{{ it.quantity }}</td>
+                            <td class="text-right">{{ it.grossWeight }} g</td>
+                            <td class="text-right font-bold text-emerald">{{ it.netWeight }} g</td>
+                            <td class="text-right font-bold">{{ it.fineWeight }} g</td>
+                            <td class="text-right font-bold">₹{{ it.valuationAmount | number:'1.2-2' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+
+              <!-- 4. 5-Column Financial Settlement Row (Image 8 Bottom / Image 9 Top) -->
+              <div class="rel-financial-settlement-row">
+                <!-- Col 1: PRINCIPAL AMOUNT -->
+                <div class="fin-col">
+                  <label class="fin-lbl">PRINCIPAL AMOUNT:</label>
+                  <div class="fin-input-box">
+                    <input type="text" [value]="loan.principalAmount | number:'1.2-2'" readonly class="fin-input" />
+                  </div>
+                  <div class="fin-account-sub">{{ loan.loanType === 'UNSECURED' ? 'Unsecured Loans' : 'Secured Loans' }}</div>
+                </div>
+
+                <!-- Col 2: INTEREST PAID -->
+                <div class="fin-col">
+                  <label class="fin-lbl">INTEREST PAID:</label>
+                  <div class="fin-input-box">
+                    <input
+                      type="number"
+                      step="0.01"
+                      [(ngModel)]="releaseForm.accruedInterest"
+                      (ngModelChange)="onInterestPaidChange()"
+                      class="fin-input text-amber font-bold"
+                    />
+                  </div>
+                  <div class="fin-account-sub">Interest Rec</div>
+                </div>
+
+                <!-- Col 3: DISCOUNT -->
+                <div class="fin-col">
+                  <label class="fin-lbl">DISCOUNT:</label>
+                  <div class="fin-input-box">
+                    <input
+                      type="number"
+                      step="0.01"
+                      [(ngModel)]="releaseForm.discountAmount"
+                      (ngModelChange)="onDiscountOrExtraChange()"
+                      class="fin-input text-amber"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div class="fin-account-sub">Discount Paid</div>
+                </div>
+
+                <!-- Col 4: EXTRA AMT -->
+                <div class="fin-col">
+                  <label class="fin-lbl">EXTRA AMT:</label>
+                  <div class="fin-input-box">
+                    <input
+                      type="number"
+                      step="0.01"
+                      [(ngModel)]="releaseForm.extraAmount"
+                      (ngModelChange)="onDiscountOrExtraChange()"
+                      class="fin-input text-blue"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div class="fin-account-sub">Direct Incomes</div>
+                </div>
+
+                <!-- Col 5: AMOUNT PAID -->
+                <div class="fin-col paid-highlight-col">
+                  <label class="fin-lbl">AMOUNT PAID:</label>
+                  <div class="fin-paid-row">
+                    <div class="fin-input-box paid-box">
+                      <input type="text" [value]="releaseForm.totalPayable | number:'1.2-2'" readonly class="fin-input text-emerald font-extrabold" />
+                    </div>
+                    <div class="fin-action-icons">
+                      <span class="fin-icon-tool" title="Monitor Preview">🖥️</span>
+                      <span class="fin-icon-tool" title="Customer Camera Photo">📷</span>
+                    </div>
+                  </div>
+                  <div class="fin-account-sub">Total Due Settlement</div>
+                </div>
+              </div>
+
+              <!-- 5. Payment Details Box (Pink Dashed Box - Image 9) -->
+              <div class="rel-payment-pink-box">
+                <div class="pink-header-row">
+                  <h4 class="pink-title">PAYMENT DETAILS</h4>
+                  <div class="pink-quick-shortcuts">
+                    <span class="quick-lbl">Quick Fill:</span>
+                    <button type="button" class="btn-quick-fill" (click)="setFullCash()">Cash Full</button>
+                    <button type="button" class="btn-quick-fill" (click)="setFullBank()">Bank Full</button>
+                    <button type="button" class="btn-quick-fill" (click)="setFullOnline()">Online Full</button>
+                  </div>
+                </div>
+
+                <div class="pink-payment-rows">
+                  <!-- Row 1: Cash in Hand -->
+                  <div class="pink-pay-line">
+                    <div class="pink-mode-tag">
+                      <span class="mode-ico">💵</span> Cash in Hand
+                    </div>
+                    <input
+                      type="text"
+                      [(ngModel)]="releaseForm.cashNarration"
+                      placeholder="CASH NARRATION"
+                      class="pink-narration-input"
+                    />
+                    <div class="pink-amt-box">
+                      <span class="cur-sym">₹</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        [(ngModel)]="releaseForm.cashAmount"
+                        class="pink-amount-input font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Row 2: Bank Account -->
+                  <div class="pink-pay-line">
+                    <div class="pink-mode-tag">
+                      <span class="mode-ico">🏦</span> Bank Account
+                    </div>
+                    <input
+                      type="text"
+                      [(ngModel)]="releaseForm.bankNarration"
+                      placeholder="BANK NARRATION / CHEQUE NO"
+                      class="pink-narration-input"
+                    />
+                    <div class="pink-amt-box">
+                      <span class="cur-sym">₹</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        [(ngModel)]="releaseForm.bankAmount"
+                        class="pink-amount-input font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Row 3: Card Payment -->
+                  <div class="pink-pay-line">
+                    <div class="pink-mode-tag">
+                      <span class="mode-ico">💳</span> Card Payment
+                    </div>
+                    <input
+                      type="text"
+                      [(ngModel)]="releaseForm.cardNarration"
+                      placeholder="CARD NARRATION / AUTH CODE"
+                      class="pink-narration-input"
+                    />
+                    <div class="pink-amt-box">
+                      <span class="cur-sym">₹</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        [(ngModel)]="releaseForm.cardAmount"
+                        class="pink-amount-input font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Row 4: Online Payment -->
+                  <div class="pink-pay-line">
+                    <div class="pink-mode-tag">
+                      <span class="mode-ico">📱</span> Online Payment
+                    </div>
+                    <input
+                      type="text"
+                      [(ngModel)]="releaseForm.onlineNarration"
+                      placeholder="ONLINE NARRATION / UPI TXN REF"
+                      class="pink-narration-input"
+                    />
+                    <div class="pink-amt-box">
+                      <span class="cur-sym">₹</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        [(ngModel)]="releaseForm.onlineAmount"
+                        class="pink-amount-input font-bold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Balance Check Strip -->
+                <div class="pink-balance-bar">
+                  <span [class.text-emerald]="paymentBalanceDiff === 0" [class.text-red]="paymentBalanceDiff !== 0" class="font-bold">
+                    {{ paymentBalanceDiff === 0 ? '✔ Payment Perfectly Balanced (Total: ₹' + (totalPaymentEntered | number:'1.2-2') + ')' : '⚠ Remaining Balance: ₹' + (paymentBalanceDiff | number:'1.2-2') }}
+                  </span>
+                  <div class="pink-remarks-field">
+                    <input
+                      type="text"
+                      [(ngModel)]="releaseForm.remarks"
+                      placeholder="Release remarks / customer handover note..."
+                      class="pink-remarks-input"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- 6. Footer Action Bar (Image 9 Bottom) -->
+              <div class="rel-footer-action-bar">
+                <div class="rel-footer-left">
+                  <button type="button" class="btn-footer-form8" (click)="openDetailModal('FORM8')">
+                    <span class="f8-badge">8</span> FORM8
+                  </button>
+                </div>
+
+                <div class="rel-footer-center">
+                  <button
+                    type="button"
+                    class="btn-footer-release-girvi"
+                    [disabled]="isReleasing()"
+                    (click)="submitRelease(false)"
+                  >
+                    ➔ RELEASE GIRVI
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-footer-release-print"
+                    [disabled]="isReleasing()"
+                    (click)="submitRelease(true)"
+                    title="Release and Print Delivery Voucher"
+                  >
+                    🖨 RELEASE & PRINT
+                  </button>
+                </div>
+
+                <div class="rel-footer-right">
+                  <div class="sms-template-input-box">
+                    <input
+                      type="text"
+                      placeholder="RELEASE LOAN SMS TEMPLATE ID"
+                      class="sms-template-input"
+                    />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          }
+
+
+          <!-- ============================================================== -->
+          <!-- MODE 2: MODERN RECEIPT VIEW                                    -->
+          <!-- ============================================================== -->
+          @else if (loanViewMode() === 'RECEIPT') {
+            <div class="modern-receipt-view-container">
+              <div class="details-top-header">
+                <div class="title-with-icon">
+                  <span class="money-icon">🧾</span>
+                  <div>
+                    <h2 style="margin:0; font-size:1.15rem; font-weight:800; color:#0f172a;">Active Loan / Girvi Receipt</h2>
+                    <span style="font-size:0.78rem; color:#64748b; font-weight:600;">
+                      Ticket #{{ loan.ticketNo }} · Customer: {{ customer()?.name }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="header-action-buttons">
+                  <button type="button" class="btn-head-tool" (click)="switchToDetailsView()">📋 Loan Details</button>
+                  @if (loan.status === 'ACTIVE') {
+                    <button type="button" class="btn-head-tool btn-head-primary" (click)="openReleaseDialog(loan)">🔓 Settle & Release</button>
+                  }
+                  <button type="button" class="btn-head-tool" (click)="openPrintModal(loan)">🖨 Print</button>
+                  <button type="button" class="btn-head-tool btn-head-close" (click)="closeSelectedLoan()" title="Close">✕ Close</button>
+                </div>
+              </div>
+
+              <!-- Receipt Overview Cards -->
+              <div class="m-rel-grid">
+                <div class="m-rel-card">
+                  <label class="m-lbl">PRINCIPAL DISBURSED</label>
+                  <div class="m-val-huge">₹ {{ loan.principalAmount | number:'1.2-2' }}</div>
+                  <span class="m-subtext">Start Date: {{ loan.openDate | date:'dd MMM yyyy' }}</span>
+                </div>
+
+                <div class="m-rel-card">
+                  <label class="m-lbl">RATE OF INTEREST</label>
+                  <div class="m-val-text font-bold text-slate">{{ loan.roiPercent }}% Monthly</div>
+                  <span class="m-subtext">Simple Interest</span>
+                </div>
+
+                <div class="m-rel-card">
+                  <label class="m-lbl">ACCRUED INTEREST</label>
+                  <div class="m-val-huge text-amber">₹ {{ loan.interestAmount | number:'1.2-2' }}</div>
+                  <span class="m-subtext">Tenure: {{ loan.daysElapsed }} Days</span>
+                </div>
+
+                <div class="m-rel-card">
+                  <label class="m-lbl">TOTAL OUTSTANDING</label>
+                  <div class="m-val-huge text-emerald">₹ {{ loan.totalAmount | number:'1.2-2' }}</div>
+                  <span class="m-subtext">Status: <span class="badge-active">{{ loan.status }}</span></span>
+                </div>
+              </div>
+
+              <!-- Pledged Articles Table if secured -->
+              @if (loan.items && loan.items.length) {
+                <div class="pledged-collateral-strip">
+                  <h4 style="margin:0 0 0.5rem; font-size:0.85rem; color:#0f172a;">Pledged Jewellery Articles:</h4>
+                  <table class="m-items-table">
+                    <thead>
+                      <tr>
+                        <th>Item Name</th>
+                        <th>Metal</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-right">Gross Wt</th>
+                        <th class="text-right">Net Wt</th>
+                        <th class="text-right">Fine Wt</th>
+                        <th class="text-right">Valuation</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (it of loan.items; track $index) {
+                        <tr>
+                          <td><strong>{{ it.itemName }}</strong></td>
+                          <td>{{ it.metalType }}</td>
+                          <td class="text-center">{{ it.quantity }}</td>
+                          <td class="text-right">{{ it.netWeight }} g</td>
+                          <td class="text-right font-bold text-emerald">{{ it.netWeight }} g</td>
+                          <td class="text-right">{{ it.fineWeight }} g</td>
+                          <td class="text-right font-bold">₹{{ it.valuationAmount | number:'1.2-2' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
+
+                    <!-- ============================================================== -->
+          <!-- MODE 3: DEDICATED RELEASED LOAN / GIRVI DETAILS VIEW           -->
+          <!-- Matches Image 11 (media_1794220091586_519f3a5c.jpg)            -->
+          <!-- ============================================================== -->
+          @else if (loanViewMode() === 'RELEASED_DETAILS' || loan.status === 'RELEASED') {
+            <div class="dedicated-released-view">
+
+              <!-- 1. Modern Header Bar -->
+              <div class="released-top-header">
+                <div class="released-header-left">
+                  <span class="red-radio-dot">🔴</span>
+                  <h2 class="released-title">RELEASED LOAN / GIRVI DETAILS</h2>
+                  <span class="released-badge-pill">Ticket #{{ loan.ticketNo }} · Status: RELEASED</span>
+                  <span class="released-borrower-pill">Borrower: <strong>{{ customer()?.name || loan.customerName || 'Customer' }}</strong></span>
+                  <span class="rel-custody-pill" title="Settlement Status">🏛️ Vault & Custody Settled</span>
+                </div>
+                <div class="released-header-right">
+                  <button type="button" class="btn-rel-head-btn btn-print" (click)="openPrintModal(loan)">🖨 Print</button>
+                  <button type="button" class="btn-rel-head-btn btn-close-x" (click)="closeSelectedLoan()" title="Close Details">✕ Close</button>
+                </div>
+              </div>
+
+              <!-- 2. Modern Form Card (Exact 12 options from reference media_1794226308254_e88ea6fe.png, properly balanced in 4x3 grid) -->
+              <div class="modern-released-form-card">
+                <div class="rel-form-grid">
+
+                  <!-- ROW 1 (4 Columns: Financial Core & Booking Metadata) -->
+                  <!-- 1. PRINCIPAL AMOUNT -->
+                  <div class="rel-form-cell principal-hero-cell">
+                    <label class="cell-lbl">PRINCIPAL AMOUNT</label>
+                    <div class="cell-val principal-hero-val">
+                      <span class="principal-num">₹ {{ loan.principalAmount | number:'1.0-0' }}</span>
+                      <span class="cfg-info-ico" title="Principal Amount Disbursed">ℹ</span>
+                    </div>
+                  </div>
+
+                  <!-- 2. LOAN START DATE -->
+                  <div class="rel-form-cell">
+                    <label class="cell-lbl">LOAN START DATE</label>
+                    <div class="cell-val text-blue font-bold">{{ loan.openDate | date:'dd MMM yyyy' | uppercase }}</div>
+                  </div>
+
+                  <!-- 3. FIRM NAME -->
+                  <div class="rel-form-cell">
+                    <label class="cell-lbl">FIRM NAME</label>
+                    <div class="cell-val font-semibold">{{ firmName }}</div>
+                  </div>
+
+                  <!-- 4. LOAN SERIAL NO. -->
+                  <div class="rel-form-cell">
+                    <label class="cell-lbl">LOAN SERIAL NO.</label>
+                    <div class="cell-val font-bold">#{{ loan.ticketNo }}</div>
+                  </div>
+
+                  <!-- ROW 2 (4 Columns: Timeline Lifecycle & Rates) -->
+                  <!-- 5. UPDATED LOAN DATE -->
+                  <div class="rel-form-cell">
+                    <label class="cell-lbl">UPDATED LOAN DATE</label>
+                    <div class="cell-val text-blue font-bold">{{ (loan.updatedAt || loan.openDate) | date:'dd MMM yyyy' }}</div>
+                  </div>
+
+                  <!-- 6. LOAN RELEASED DATE -->
+                  <div class="rel-form-cell released-date-cell">
+                    <label class="cell-lbl text-crimson">LOAN RELEASED DATE</label>
+                    <div class="cell-val released-date-val font-extrabold text-crimson">
+                      <span>{{ (loan.releaseDate || loan.updatedAt || loan.openDate) | date:'dd MMM yyyy' | uppercase }}</span>
+                      <span class="released-check-badge">✔ RELEASED</span>
+                    </div>
+                  </div>
+
+                  <!-- 7. RATE OF INTEREST -->
+                  <div class="rel-form-cell roi-cell">
+                    <label class="cell-lbl">RATE OF INTEREST</label>
+                    <div class="cell-val roi-val font-bold text-amber">
+                      <span>{{ loan.roiPercent }}%</span>
+                      <span class="roi-period-tag">Monthly</span>
+                    </div>
+                  </div>
+
+                  <!-- 8. LOAN NO. -->
+                  <div class="rel-form-cell">
+                    <label class="cell-lbl">LOAN NO.</label>
+                    <div class="cell-val font-bold">{{ loan.packetNo || loan.boxNo || '1' }}</div>
+                  </div>
+
+                  <!-- ROW 3 (4 Columns: Terms, Periods & Schemes) -->
+                  <!-- 9. TIME PERIOD -->
+                  <div class="rel-form-cell time-period-cell">
+                    <label class="cell-lbl">TIME PERIOD</label>
+                    <div class="cell-val time-period-val">
+                      <span class="time-period-txt">{{ loan.timePeriodMonths || 12 }} MONTHS</span>
+                      <span class="arrow-ico">➔</span>
+                    </div>
+                  </div>
+
+                  <!-- 10. INTEREST OPTION -->
+                  <div class="rel-form-cell">
+                    <label class="cell-lbl">INTEREST OPTION</label>
+                    <div class="cell-val font-semibold">{{ loan.interestType || 'Monthly' }}</div>
+                  </div>
+
+                  <!-- 11. MONTHLY INTEREST OPTION -->
+                  <div class="rel-form-cell">
+                    <label class="cell-lbl">MONTHLY INTEREST OPTION</label>
+                    <div class="cell-val text-muted font-medium">{{ loan.monthlyInterestOption || 'Default' }}</div>
+                  </div>
+
+                  <!-- 12. SIMPLE / COMPOUND INTEREST -->
+                  <div class="rel-form-cell">
+                    <label class="cell-lbl">SIMPLE / COMPOUND INTEREST</label>
+                    <div class="cell-val text-muted font-semibold">{{ loan.interestScheme || 'Simple Int' }}</div>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- 3. Summary Snapshot Table (13 Columns) -->
+              <div class="released-snapshot-wrap">
+                <div class="released-header-tag" [class.unsec]="loan.loanType === 'UNSECURED'">
+                  {{ loan.loanType === 'UNSECURED' ? 'UNSECURED LOAN' : 'SECURED LOAN' }}
+                </div>
+
+                <div class="table-responsive">
+                  <table class="released-table">
+                    <thead>
+                      <tr>
+                        <th>PRINCIPAL</th>
+                        <th>ROI</th>
+                        <th>S. INT</th>
+                        <th>DISC</th>
+                        <th>EXTRA AMT</th>
+                        <th>TOTAL</th>
+                        <th>START DATE</th>
+                        <th>END DATE</th>
+                        <th>TIME PERIOD</th>
+                        <th>VALUATION</th>
+                        <th>PROFIT/LOSS</th>
+                        <th>STATUS</th>
+                        <th>USER IMAGE</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="font-bold">₹{{ loan.principalAmount | number:'1.2-2' }}</td>
+                        <td>{{ loan.roiPercent }} %</td>
+                        <td class="text-amber font-bold">₹{{ (loan.paidInterest || loan.interestAmount) | number:'1.2-2' }}</td>
+                        <td>{{ loan.discountAmount ? ('₹' + (loan.discountAmount | number:'1.2-2')) : '-' }}</td>
+                        <td>{{ loan.extraAmount ? ('₹' + (loan.extraAmount | number:'1.2-2')) : '-' }}</td>
+                        <td class="text-blue font-bold">₹{{ (loan.paidAmount || loan.totalAmount) | number:'1.2-2' }}</td>
+                        <td>{{ loan.openDate | date:'dd MMM yyyy' }}</td>
+                        <td>{{ (loan.releaseDate || loan.updatedAt || loan.openDate) | date:'dd MMM yyyy' }}</td>
+                        <td>{{ loan.daysElapsed || 1 }} Days ({{ loan.daysElapsed || 1 }} Days)</td>
+                        <td>{{ loan.loanType === 'UNSECURED' ? 'UNSEC. LOAN' : ('₹' + (loan.valuationAmount | number:'1.2-2')) }}</td>
+                        <td class="text-emerald font-bold">{{ loan.loanType === 'UNSECURED' ? 'UNSEC. LOAN' : '+₹' + ((loan.paidInterest || loan.interestAmount) | number:'1.2-2') }}</td>
+                        <td><span class="badge-released">Released</span></td>
+                        <td class="text-center">
+                          @if (customer()?.photoBase64) {
+                            <img [src]="resolveImageUrl(customer()?.photoBase64)" class="rel-user-thumb" alt="Customer" />
+                          } @else {
+                            <span class="rel-avatar-fallback">{{ (customer()?.name || '?').charAt(0) }}</span>
+                          }
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Ornaments Handover status if secured loan -->
+                @if (loan.loanType !== 'UNSECURED' && loan.items && loan.items.length) {
+                  <div class="released-ornaments-card">
+                    <div class="ornaments-header-row">
+                      <h5>Pledged Ornaments Returned to Borrower</h5>
+                      <span class="badge-handed-over">✔ Physical Ornaments Handed Over (Locker Released)</span>
+                    </div>
+                    <table class="handover-table">
+                      <thead>
+                        <tr>
+                          <th>Item Description</th>
+                          <th>Metal</th>
+                          <th class="text-center">Qty</th>
+                          <th class="text-right">Gross Wt</th>
+                          <th class="text-right">Net Wt</th>
+                          <th class="text-right">Fine Wt</th>
+                          <th class="text-right">Valuation</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (it of loan.items; track $index) {
+                          <tr>
+                            <td class="font-bold">{{ it.itemName }}</td>
+                            <td><span class="metal-pill">{{ it.metalType }}</span></td>
+                            <td class="text-center">{{ it.quantity }}</td>
+                            <td class="text-right">{{ it.grossWeight }} g</td>
+                            <td class="text-right font-bold text-emerald">{{ it.netWeight }} g</td>
+                            <td class="text-right font-bold">{{ it.fineWeight }} g</td>
+                            <td class="text-right font-bold">₹{{ it.valuationAmount | number:'1.2-2' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+
+              <!-- 4. Settlement Details Strip (Yellowish Strip with Amber Border) -->
+              <div class="released-settlement-strip">
+                <div class="strip-grid">
+                  <div class="strip-col">
+                    <label class="strip-lbl">AMOUNT PAID</label>
+                    <div class="strip-val font-extrabold text-slate">₹{{ (loan.paidAmount || loan.totalAmount) | number:'1.0-0' }}</div>
+                  </div>
+                  <div class="strip-col">
+                    <label class="strip-lbl">INTEREST PAID</label>
+                    <div class="strip-val font-bold text-amber">₹{{ (loan.paidInterest || loan.interestAmount) | number:'1.0-0' }}</div>
+                  </div>
+                  <div class="strip-col">
+                    <label class="strip-lbl">DISCOUNT</label>
+                    <div class="strip-val font-bold">₹{{ (loan.discountAmount || 0) | number:'1.0-0' }}</div>
+                  </div>
+                  <div class="strip-col">
+                    <label class="strip-lbl">EXTRA AMT</label>
+                    <div class="strip-val font-bold">₹{{ (loan.extraAmount || 0) | number:'1.0-0' }}</div>
+                  </div>
+                  <div class="strip-col">
+                    <label class="strip-lbl">TOTAL INTEREST PAID</label>
+                    <div class="strip-val font-bold text-emerald">₹{{ (loan.paidInterest || loan.interestAmount) | number:'1.0-0' }}</div>
+                  </div>
+                  <div class="strip-col text-center">
+                    <label class="strip-lbl">USER IMAGE</label>
+                    <div class="strip-user-img">
+                      @if (customer()?.photoBase64) {
+                        <img [src]="resolveImageUrl(customer()?.photoBase64)" class="strip-thumb" alt="User" />
+                      } @else {
+                        <span>-</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 5. Bottom Action Toolbar -->
+              <div class="released-bottom-toolbar">
+                <button type="button" class="btn-rel-tool btn-tool-light-blue" (click)="openDetailModal('FORM8')" title="Form 7 Settlement Voucher">
+                  FORM7
+                </button>
+                <button type="button" class="btn-rel-tool btn-tool-teal" (click)="openDetailModal('FORM8')" title="State Money Lenders Form 8">
+                  <span class="badge-num">8</span> FORM8
+                </button>
+                <button type="button" class="btn-rel-tool btn-tool-light-blue" (click)="openPrintModal(loan)" title="Customize Voucher Print">
+                  📝 CUSTOMIZE
+                </button>
+                <button type="button" class="btn-rel-tool btn-tool-red" (click)="deleteLoan(loan)" title="Delete Released Record">
+                  ✖ DELETE
+                </button>
+                <button type="button" class="btn-rel-tool btn-tool-unrelease" (click)="unreleaseLoan(loan)" title="Unrelease and Restore to Active Status">
+                  ◀ UNRELEASE LOAN
+                </button>
+                <button type="button" class="btn-rel-tool btn-tool-close" (click)="closeSelectedLoan()" title="Close Details View">
+                  ✕ CLOSE
+                </button>
+              </div>
+
+            </div>
+          }
+
+          <!-- ============================================================== -->
+          <!-- MODE 3: ACTIVE LOAN / GIRVI DETAILS VIEW (Default)             -->
+          <!-- ============================================================== -->
+          @else {
+          <!-- Section Header -->
+          <div class="details-top-header">
+            <div class="title-with-icon">
+              <span class="money-icon">💰</span>
+              <h2>ACTIVE LOAN / GIRVI DETAILS</h2>
+              <span class="loan-type-pill">{{ loan.loanType === 'UNSECURED' ? 'UNSECURED LOAN' : 'SECURED LOAN' }}</span>
+            </div>
+
+            <div class="header-action-buttons">
+              <button type="button" class="btn-head-tool" (click)="openDetailModal('FINGER')">SIGNATURE VALIDATION</button>
+              <button type="button" class="btn-head-tool" (click)="openDetailModal('LOG')">LOAN LOG</button>
+              <button type="button" class="btn-head-tool" (click)="openDetailModal('NOTICE')">LOAN NOTICE LOG</button>
+              <button type="button" class="btn-head-tool btn-head-primary" (click)="switchToReceiptView()">LOAN RECEIPT</button>
+              <button type="button" class="btn-head-tool btn-head-close" (click)="closeSelectedLoan()" title="Back to list">✕ Close Details</button>
+            </div>
+          </div>
+
+          <!-- Top Terms Field Grid (Green Dotted Card matching Image) -->
+          <div class="terms-grid-box">
+            <div class="term-field principal-highlight">
+              <label>PRINCIPAL AMOUNT <span class="info-circle" title="Disbursed Principal">ℹ</span></label>
+              <div class="val-huge">{{ loan.principalAmount | number:'1.0-2' }}</div>
+            </div>
+
+            <div class="term-field">
+              <label>UPDATED LOAN DATE</label>
+              <div class="val-text text-navy">{{ loan.openDate | date:'dd MMM yyyy' }}</div>
+            </div>
+
+            <div class="term-field">
+              <label>FIRM NAME</label>
+              <div class="val-text">{{ firmName }}</div>
+            </div>
+
+            <div class="term-field">
+              <label>LOAN SERIAL NO.</label>
+              <div class="val-text text-center font-bold">#{{ loan.ticketNo }}</div>
+            </div>
+
+            <div class="term-field">
+              <label>MONTHLY INTEREST OPTION</label>
+              <div class="val-text">Default</div>
+            </div>
+
+            <div class="term-field">
+              <label>RATE OF INTEREST</label>
+              <div class="val-text text-center font-bold">{{ loan.roiPercent }}%</div>
+            </div>
+
+            <div class="term-field">
+              <label>LOAN NO. / PACKET</label>
+              <div class="val-text text-center">{{ loan.packetNo || '1' }}</div>
+            </div>
+
+            <div class="term-field">
+              <label>TIME PERIOD</label>
+              <div class="val-text text-center text-muted">{{ loan.timePeriodMonths || 12 }} MONTHS</div>
+            </div>
+
+            <div class="term-field">
+              <label>INTEREST OPTION</label>
+              <div class="val-text">{{ loan.interestType }}</div>
+            </div>
+
+            <div class="term-field">
+              <label>SIMPLE / COMPOUND INTEREST</label>
+              <div class="val-text">Simple Int</div>
+            </div>
+          </div>
+
+          <!-- Center Transfer Badge -->
+          <div class="center-transfer-badge">
+            <div class="transfer-badge-circle" title="Custody: {{ loan.boxNo || loan.itemLocation || 'Main Strong Room Safe' }}">
+              <span>🏛⇄🏦</span>
+            </div>
+          </div>
+
+          <!-- Financial Summary & Metrics Row (Matching Image) -->
+          <div class="summary-table-section">
+            <div class="summary-section-label">{{ loan.loanType === 'UNSECURED' ? 'UNSECURED LOAN' : 'SECURED LOAN' }}</div>
+
+            <div class="table-responsive">
+              <table class="girvi-summary-table">
+                <thead>
+                  <tr>
+                    <th>PRINCIPAL</th>
+                    <th>ROI</th>
+                    <th>S. INT</th>
+                    <th>DISC</th>
+                    <th>EXTRA AMT</th>
+                    <th>TOTAL</th>
+                    <th>START DATE</th>
+                    <th>END DATE</th>
+                    <th>TIME PERIOD</th>
+                    <th>VALUATION</th>
+                    <th>PROFIT/LOSS</th>
+                    <th>STATUS</th>
+                    <th>USER IMAGE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="font-bold">₹{{ loan.principalAmount | number:'1.2-2' }}</td>
+                    <td>{{ loan.roiPercent }} %</td>
+                    <td class="text-amber font-bold">₹{{ loan.interestAmount | number:'1.2-2' }}</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td class="font-bold text-emerald">₹{{ loan.totalAmount | number:'1.2-2' }}</td>
+                    <td>{{ loan.openDate | date:'dd MMM yyyy' }}</td>
+                    <td>{{ computeEndDate(loan.openDate, loan.timePeriodMonths) | date:'dd MMM yyyy' }}</td>
+                    <td>{{ loan.daysElapsed }} Day ({{ loan.daysElapsed }} Days)</td>
+                    <td>{{ loan.valuationAmount ? ('₹' + (loan.valuationAmount | number:'1.2-2')) : (loan.loanType === 'UNSECURED' ? 'UNSEC. LOAN' : '—') }}</td>
+                    <td class="text-emerald">+₹{{ loan.interestAmount | number:'1.2-2' }}</td>
+                    <td>
+                      <span class="status-badge" [class.badge-active]="loan.status === 'ACTIVE'" [class.badge-released]="loan.status === 'RELEASED'">
+                        {{ loan.status }}
+                      </span>
+                    </td>
+                    <td class="user-thumb-cell">
+                      @if (customer()?.photoBase64) {
+                        <img [src]="resolveImageUrl(customer()?.photoBase64)" alt="Customer" class="user-mini-thumb" />
+                      } @else {
+                        <span class="no-img">-</span>
+                      }
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Pledged Jewellery Items Details (If Secured Loan) -->
+          @if (loan.items && loan.items.length) {
+            <div class="pledged-articles-section">
+              <h4>Pledged Jewellery Articles (Custody in {{ loan.boxNo || loan.itemLocation || 'Safe Locker' }})</h4>
+              <div class="table-responsive">
+                <table class="pledged-ornaments-table">
+                  <thead>
+                    <tr>
+                      <th style="width:40px">#</th>
+                      <th style="width:60px">Photo</th>
+                      <th>Metal</th>
+                      <th>Item Description</th>
+                      <th class="text-center">Qty</th>
+                      <th class="text-right">Gross Wt (g)</th>
+                      <th class="text-right">Less Wt (g)</th>
+                      <th class="text-right">Net Wt (g)</th>
+                      <th class="text-right">Tunch %</th>
+                      <th class="text-right">Fine Wt (g)</th>
+                      <th class="text-right">Valuation (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of loan.items; track $index; let idx = $index) {
+                      <tr>
+                        <td class="text-center">{{ idx + 1 }}</td>
+                        <td class="item-img-cell">
+                          @if (item.photoUrl) {
+                            <img [src]="resolveImageUrl(item.photoUrl)" alt="Item" class="item-photo-mini" />
+                          } @else {
+                            <span class="no-photo-badge">📷</span>
+                          }
+                        </td>
+                        <td><strong>{{ item.metalType }}</strong></td>
+                        <td class="font-bold">{{ item.itemName }}</td>
+                        <td class="text-center">{{ item.quantity }}</td>
+                        <td class="text-right">{{ item.grossWeight }} g</td>
+                        <td class="text-right">{{ item.lessWeight }} g</td>
+                        <td class="text-right font-bold text-emerald">{{ item.netWeight }} g</td>
+                        <td class="text-right">{{ item.purityPercent }}%</td>
+                        <td class="text-right font-bold">{{ item.fineWeight }} g</td>
+                        <td class="text-right font-bold">₹{{ item.valuationAmount | number:'1.2-2' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+
+          <!-- Bottom Action Toolbar (Matches Image 3) -->
+          <div class="bottom-action-toolbar">
+            <button type="button" class="btn-action-pill btn-pill-blue" (click)="openDetailModal('FORM8')" title="State Money Lenders Form 8">
+              <span class="pill-ico">8</span> FORM8
+            </button>
+            <button type="button" class="btn-action-pill" (click)="openPrintModal(loan)" title="Print Barcode Tag">
+              🏷 BARCODE
+            </button>
+            <button type="button" class="btn-action-pill" (click)="openPrintModal(loan)" title="Add Tag">
+              ➕ + BARCODE
+            </button>
+            <button type="button" class="btn-action-pill btn-pill-purple" (click)="openDetailModal('NOTICE')" title="Auction Demand Notice">
+              ⚖ GIRVI NOTICE
+            </button>
+            <button type="button" class="btn-action-pill" (click)="openPrintModal(loan)" title="Print Voucher">
+              🖨 PRINT
+            </button>
+            <button type="button" class="btn-action-pill btn-pill-red" (click)="closeSelectedLoan()" title="Close Details">
+              ✖ CLOSE
+            </button>
+            <button type="button" class="btn-action-pill btn-pill-amber" (click)="markAuction(loan)" title="Mark for Auction">
+              🔨 AUCTION
+            </button>
+            <button type="button" class="btn-action-pill" (click)="openDetailModal('FINGER')" title="Biometric Validation">
+              🖐 FINGER
+            </button>
+            @if (loan.status === 'ACTIVE') {
+              <button type="button" class="btn-action-pill btn-pill-emerald" (click)="releaseLoan(loan)" title="Settle and Release Loan">
+                ✔ RELEASE
+              </button>
+              <button type="button" class="btn-action-pill btn-pill-emerald" (click)="releaseLoan(loan)" title="OTP Settle">
+                📱 OTP RELEASE
+              </button>
+            }
+            <button type="button" class="btn-action-pill" (click)="openDetailModal('SMS')" title="Send Reminder SMS">
+              ✉ SMS TEMPLATE
+            </button>
+          </div>
+          }
+        </section>
+      }
+
+      <!-- Empty state if no loans exist at all and Add form is closed -->
+      @if (loans().length === 0 && !isAddLoanOpen()) {
+        <div class="empty-loans-splash modern-card" style="padding: 3.5rem 1rem; text-align:center; background:#ffffff; border:1px solid #e2e8f0; border-radius:10px;">
+          <div style="font-size: 2.8rem; margin-bottom: 0.5rem; color: #0284c7;">◈</div>
+          <h3 style="margin-bottom: 0.35rem; color: #0f172a;">No Loans on Record</h3>
+          <p style="color: #64748b; margin-bottom: 1.5rem;">Click "+ LOAN" to create a new girvi or unsecured loan for this customer.</p>
+          <button type="button" class="btn btn-primary" (click)="openAddLoan()">+ Create New Loan</button>
+        </div>
+      }
+
+    </section>
+  }
+
+  <!-- 5. OVERVIEW / PROFILE TAB -->
+  @if (activeTab() === 'overview' && customer(); as c) {
+    <section class="overview-section modern-card">
+      <h3>Customer Full Profile</h3>
+      <div class="profile-details-grid">
+        <div class="profile-box">
+          <h4>Personal Information</h4>
+          <p><strong>Name:</strong> {{ c.name }}</p>
+          <p><strong>Code:</strong> {{ c.code }}</p>
+          <p><strong>Father / Spouse:</strong> {{ c.fatherName || c.spouseName || '—' }}</p>
+          <p><strong>Mother Name:</strong> {{ c.motherName || '—' }}</p>
+          <p><strong>DOB:</strong> {{ c.dob || '—' }}</p>
+          <p><strong>Gender:</strong> {{ c.gender === 'M' ? 'Male' : (c.gender === 'F' ? 'Female' : '—') }}</p>
+          <p><strong>Marital Status:</strong> {{ c.maritalStatus || '—' }}</p>
+        </div>
+
+        <div class="profile-box">
+          <h4>Contact & Address</h4>
+          <p><strong>Mobile:</strong> {{ c.phone || '—' }}</p>
+          <p><strong>Alt Phone:</strong> {{ c.altPhone || '—' }}</p>
+          <p><strong>Email:</strong> {{ c.email || '—' }}</p>
+          <p><strong>Address:</strong> {{ c.address || c.currentAddress || '—' }}</p>
+          <p><strong>City / State:</strong> {{ c.city || '—' }}, {{ c.stateName || '—' }}</p>
+          <p><strong>Pincode:</strong> {{ c.pincode || '—' }}</p>
+        </div>
+
+        <div class="profile-box">
+          <h4>Bank & KYC Documents</h4>
+          <p><strong>PAN:</strong> {{ c.panNo || '—' }}</p>
+          <p><strong>Aadhaar:</strong> {{ c.aadhaarNo || '—' }}</p>
+          <p><strong>GSTIN:</strong> {{ c.gstin || '—' }}</p>
+          <p><strong>Bank:</strong> {{ c.bankName || '—' }}</p>
+          <p><strong>Account No:</strong> {{ c.bankAccNo || '—' }}</p>
+          <p><strong>IFSC:</strong> {{ c.bankIfscCode || '—' }}</p>
+        </div>
+      </div>
+    </section>
+  }
+
+</div>
+
+<!-- PRINTABLE RECEIPT MODAL -->
+@if (printLoanModal(); as loan) {
+  <div class="receipt-modal-backdrop" (click)="closePrintModal()">
+    <div class="receipt-modal" (click)="$event.stopPropagation()">
+      <div class="receipt-modal-header no-print">
+        <h3>Girvi Pledge Receipt</h3>
+        <div class="modal-header-actions">
+          <button type="button" class="btn btn-emerald" (click)="printReceipt()">🖨 Print Receipt</button>
+          <button type="button" class="btn-icon-close" (click)="closePrintModal()">✕</button>
+        </div>
+      </div>
+
+      <!-- Printable Area -->
+      <div class="printable-slip">
+        <div class="slip-header">
+          <h2>{{ firmName }}</h2>
+          <p class="slip-sub">Girvi & Gold Loan Pledge Receipt / Ticket</p>
+          <div class="slip-badge">LOAN TICKET #{{ loan.ticketNo }}</div>
+        </div>
+
+        <div class="slip-customer-row">
+          <div>
+            <p><strong>Borrower / Customer:</strong> {{ customer()?.name }}</p>
+            <p><strong>Customer ID:</strong> {{ customer()?.code }}</p>
+            <p><strong>Phone:</strong> {{ customer()?.phone }}</p>
+            <p><strong>Address:</strong> {{ customer()?.city }}, {{ customer()?.stateName }}</p>
+          </div>
+          <div class="text-right">
+            <p><strong>Date:</strong> {{ loan.openDate | date:'mediumDate' }}</p>
+            <p><strong>Packet No:</strong> {{ loan.packetNo || '—' }}</p>
+            <p><strong>Locker / Box:</strong> {{ loan.boxNo || '—' }}</p>
+            <p><strong>Status:</strong> {{ loan.status }}</p>
+          </div>
+        </div>
+
+        <div class="slip-finance-box">
+          <div class="slip-stat">
+            <span>Principal Amount</span>
+            <strong>₹{{ loan.principalAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="slip-stat">
+            <span>Rate of Interest</span>
+            <strong>{{ loan.roiPercent }}% / {{ loan.interestType }}</strong>
+          </div>
+          <div class="slip-stat">
+            <span>Accrued Interest ({{ loan.daysElapsed }} days)</span>
+            <strong>₹{{ loan.interestAmount | number:'1.2-2' }}</strong>
+          </div>
+          <div class="slip-stat highlight">
+            <span>Total Payable Today</span>
+            <strong>₹{{ loan.totalAmount | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <h4>Pledged Articles / Jewellery:</h4>
+        <table class="slip-items-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Gross Wt</th>
+              <th>Net Wt</th>
+              <th>Fine Wt</th>
+              <th>Valuation</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (loan.items && loan.items.length) {
+              @for (it of loan.items; track $index) {
+                <tr>
+                  <td>{{ it.itemName }} ({{ it.metalType }})</td>
+                  <td>{{ it.quantity }}</td>
+                  <td>{{ it.grossWeight }} g</td>
+                  <td>{{ it.netWeight }} g</td>
+                  <td>{{ it.fineWeight }} g</td>
+                  <td>₹{{ it.valuationAmount | number:'1.2-2' }}</td>
+                </tr>
+              }
+            } @else {
+              <tr>
+                <td>{{ loan.itemDesc || 'Gold Articles' }}</td>
+                <td>1</td>
+                <td>{{ loan.grossWeight }} g</td>
+                <td>{{ loan.netWeight }} g</td>
+                <td>{{ loan.fineWeight }} g</td>
+                <td>₹{{ loan.valuationAmount | number:'1.2-2' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <div class="slip-signatures">
+          <div class="sig-line">
+            <p>Customer Signature / Thumb</p>
+          </div>
+          <div class="sig-line text-right">
+            <p>For {{ firmName }} (Authorized Signatory)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- WEBCAM MODAL FOR PLEDGED ITEM -->
+@if (webcamOpen()) {
+  <div class="webcam-modal-backdrop" (click)="stopItemWebcam()">
+    <div class="webcam-dialog" (click)="$event.stopPropagation()">
+      <div class="webcam-header">
+        <h4>Snap Pledged Item Photo</h4>
+        <button type="button" class="btn-icon-close" (click)="stopItemWebcam()">✕</button>
+      </div>
+      <div class="webcam-feed">
+        <video #webcamVideo autoplay playsinline muted></video>
+      </div>
+      <div class="webcam-footer">
+        <button type="button" class="btn btn-secondary" (click)="stopItemWebcam()">Cancel</button>
+        <button type="button" class="btn-primary" (click)="captureItemWebcam()">Capture Photo</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- DETAIL MODAL: FORM 8 (MONEY LENDERS PLEDGE REGISTER) -->
+@if (activeDetailModal() === 'FORM8' && selectedLoan(); as loan) {
+  <div class="receipt-modal-backdrop" (click)="closeDetailModal()">
+    <div class="receipt-modal form8-modal" (click)="$event.stopPropagation()">
+      <div class="receipt-modal-header no-print">
+        <h3>Form No. 8 (Pledge Register Entry)</h3>
+        <div class="modal-header-actions">
+          <button type="button" class="btn btn-emerald" (click)="printReceipt()">🖨 Print Form 8</button>
+          <button type="button" class="btn-icon-close" (click)="closeDetailModal()">✕</button>
+        </div>
+      </div>
+      <div class="printable-slip">
+        <div class="slip-header">
+          <h2>{{ firmName }}</h2>
+          <p class="slip-sub">FORM NO. 8 — REGISTER OF PAWNS AND PLEDGES</p>
+          <p style="font-size:0.75rem; color:#64748b;">(Prescribed under Section 18 of the Money Lenders Act)</p>
+          <div class="slip-badge">PLEDGE SERIAL NO: {{ loan.ticketNo }}</div>
+        </div>
+
+        <table class="slip-items-table" style="margin: 1.25rem 0;">
+          <tbody>
+            <tr><td><strong>1. Serial Number of Pawn</strong></td><td>#{{ loan.ticketNo }}</td></tr>
+            <tr><td><strong>2. Date of Loan Transaction</strong></td><td>{{ loan.openDate | date:'fullDate' }}</td></tr>
+            <tr><td><strong>3. Name & Address of Debtor / Pawner</strong></td><td>{{ customer()?.name }}, {{ customer()?.city }}, {{ customer()?.stateName }} (Ph: {{ customer()?.phone }})</td></tr>
+            <tr><td><strong>4. Description & Weight of Article Pledged</strong></td><td>{{ loan.itemDesc || 'Gold Jewellery' }} (Net Wt: {{ loan.netWeight }} g, Fine Wt: {{ loan.fineWeight }} g)</td></tr>
+            <tr><td><strong>5. Estimated Valuation of Pledged Article</strong></td><td>₹{{ loan.valuationAmount | number:'1.2-2' }}</td></tr>
+            <tr><td><strong>6. Principal Sum Advanced</strong></td><td><strong>₹{{ loan.principalAmount | number:'1.2-2' }}</strong></td></tr>
+            <tr><td><strong>7. Rate of Interest Agreed</strong></td><td>{{ loan.roiPercent }}% per month ({{ loan.interestType }})</td></tr>
+            <tr><td><strong>8. Agreed Time of Repayment</strong></td><td>{{ loan.timePeriodMonths || 12 }} Months (Due: {{ computeEndDate(loan.openDate, loan.timePeriodMonths) | date:'mediumDate' }})</td></tr>
+            <tr><td><strong>9. Storage Safe Location</strong></td><td>{{ loan.boxNo || loan.itemLocation || 'Vault A' }}</td></tr>
+          </tbody>
+        </table>
+
+        <div class="slip-signatures" style="margin-top:2.5rem;">
+          <div class="sig-line"><p>Signature / LTI of Pawner (Borrower)</p></div>
+          <div class="sig-line text-right"><p>For {{ firmName }} (Licensed Pawnbroker)</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- DETAIL MODAL: GIRVI DEMAND / AUCTION NOTICE -->
+@if (activeDetailModal() === 'NOTICE' && selectedLoan(); as loan) {
+  <div class="receipt-modal-backdrop" (click)="closeDetailModal()">
+    <div class="receipt-modal" (click)="$event.stopPropagation()">
+      <div class="receipt-modal-header no-print">
+        <h3>Pledge Demand & Auction Notice</h3>
+        <div class="modal-header-actions">
+          <button type="button" class="btn btn-emerald" (click)="printReceipt()">🖨 Print Notice</button>
+          <button type="button" class="btn-icon-close" (click)="closeDetailModal()">✕</button>
+        </div>
+      </div>
+      <div class="printable-slip">
+        <div class="slip-header">
+          <h2>{{ firmName }}</h2>
+          <p class="slip-sub">FINAL NOTICE FOR REDEMPTION OF PLEDGED ORNAMENTS</p>
+          <div class="slip-badge" style="background:#fef2f2; color:#b91c1c; border-color:#fca5a5;">DEMAND NOTICE #NT-{{ loan.ticketNo }}</div>
+        </div>
+
+        <div style="margin: 1.5rem 0; font-size:0.85rem; line-height:1.6;">
+          <p><strong>To,</strong><br>{{ customer()?.name }}<br>{{ customer()?.address || customer()?.city }}, {{ customer()?.stateName }}<br>Phone: {{ customer()?.phone }}</p>
+
+          <p style="margin-top:1rem;"><strong>Subject:</strong> Notice of overdue settlement for Girvi Ticket <strong>#{{ loan.ticketNo }}</strong> dated <strong>{{ loan.openDate | date:'mediumDate' }}</strong>.</p>
+
+          <p>Dear Sir / Madam,</p>
+          <p>This is to bring to your kind notice that against the security of your pledged jewellery articles (<strong>{{ loan.itemDesc || 'Gold Ornaments' }}</strong>, Net Wt: <strong>{{ loan.netWeight }} g</strong>), you obtained a loan of <strong>₹{{ loan.principalAmount | number:'1.2-2' }}</strong>.</p>
+
+          <p>As on today, the outstanding amounts are as follows:</p>
+          <ul>
+            <li>Principal Amount: <strong>₹{{ loan.principalAmount | number:'1.2-2' }}</strong></li>
+            <li>Accrued Interest ({{ loan.daysElapsed }} days): <strong>₹{{ loan.interestAmount | number:'1.2-2' }}</strong></li>
+            <li><strong>Total Outstanding Payable: ₹{{ loan.totalAmount | number:'1.2-2' }}</strong></li>
+          </ul>
+
+          <p>You are hereby requested to settle the full balance within <strong>15 days</strong> from receipt of this notice, failing which the pledged articles will be disposed of via authorized public auction as per the provisions of the Money Lenders Act.</p>
+        </div>
+
+        <div class="slip-signatures" style="margin-top:2.5rem;">
+          <div class="sig-line"><p>Borrower Acknowledgement</p></div>
+          <div class="sig-line text-right"><p>Authorized Signatory<br><strong>{{ firmName }}</strong></p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- DETAIL MODAL: BIOMETRIC / SIGNATURE VALIDATION -->
+@if (activeDetailModal() === 'FINGER' && selectedLoan(); as loan) {
+  <div class="receipt-modal-backdrop" (click)="closeDetailModal()">
+    <div class="receipt-modal" style="max-width:520px" (click)="$event.stopPropagation()">
+      <div class="receipt-modal-header no-print">
+        <h3>Signature & Biometric Validation</h3>
+        <button type="button" class="btn-icon-close" (click)="closeDetailModal()">✕</button>
+      </div>
+      <div style="padding:1.5rem; text-align:center;">
+        <div style="font-size:3rem; margin-bottom:0.75rem;">🖐</div>
+        <h4>Borrower: {{ customer()?.name }} (Cust ID: {{ customer()?.code }})</h4>
+        <p style="font-size:0.85rem; color:#64748b; margin-bottom:1.5rem;">Ticket #{{ loan.ticketNo }} · Pledged Net Wt: {{ loan.netWeight }} g</p>
+
+        <div style="border:2px dashed #cbd5e1; border-radius:8px; padding:2rem; background:#f8fafc; margin-bottom:1.5rem;">
+          <p style="font-size:0.9rem; font-weight:700; color:#059669;">✔ Thumb Impression Captured & Verified</p>
+          <span style="font-size:0.78rem; color:#94a3b8;">Biometric Token: BIO-SEC-{{ loan.id.substring(0, 8) }}</span>
+        </div>
+
+        <button type="button" class="btn btn-emerald" style="width:100%;" (click)="closeDetailModal()">Validation Successful</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- DETAIL MODAL: AUDIT LOG -->
+@if (activeDetailModal() === 'LOG' && selectedLoan(); as loan) {
+  <div class="receipt-modal-backdrop" (click)="closeDetailModal()">
+    <div class="receipt-modal" style="max-width:580px" (click)="$event.stopPropagation()">
+      <div class="receipt-modal-header no-print">
+        <h3>Loan Activity Audit Log</h3>
+        <button type="button" class="btn-icon-close" (click)="closeDetailModal()">✕</button>
+      </div>
+      <div style="padding:1.5rem;">
+        <h4>Ticket #{{ loan.ticketNo }} Log History</h4>
+        <div style="margin-top:1rem; font-size:0.82rem; border-left:2px solid #0284c7; padding-left:1rem; display:flex; flex-direction:column; gap:0.75rem;">
+          <div>
+            <strong>{{ loan.openDate | date:'mediumDate' }}</strong>
+            <p style="margin:0.1rem 0; color:#334155;">Pledge created with Principal ₹{{ loan.principalAmount | number:'1.2-2' }}. Disbursed via Cash / Bank.</p>
+          </div>
+          <div>
+            <strong>Today</strong>
+            <p style="margin:0.1rem 0; color:#334155;">Accrued interest updated to ₹{{ loan.interestAmount | number:'1.2-2' }} (Status: {{ loan.status }}).</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- DETAIL MODAL: SMS REMINDER -->
+@if (activeDetailModal() === 'SMS' && selectedLoan(); as loan) {
+  <div class="receipt-modal-backdrop" (click)="closeDetailModal()">
+    <div class="receipt-modal" style="max-width:520px" (click)="$event.stopPropagation()">
+      <div class="receipt-modal-header no-print">
+        <h3>Send Payment Reminder SMS</h3>
+        <button type="button" class="btn-icon-close" (click)="closeDetailModal()">✕</button>
+      </div>
+      <div style="padding:1.5rem;">
+        <p style="font-size:0.85rem; color:#475569; margin-bottom:1rem;">To Borrower: <strong>{{ customer()?.name }}</strong> ({{ customer()?.phone || 'No phone' }})</p>
+        <div style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:1rem; font-size:0.85rem; line-height:1.5; color:#1e293b; margin-bottom:1.5rem;">
+          "Dear {{ customer()?.name }}, reminder from {{ firmName }}: Outstanding interest of ₹{{ loan.interestAmount | number:'1.2-2' }} is due for Girvi Ticket #{{ loan.ticketNo }}. Total due: ₹{{ loan.totalAmount | number:'1.2-2' }}. Kindly visit shop to settle."
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn btn-secondary" (click)="closeDetailModal()">Cancel</button>
+          <button type="button" class="btn btn-emerald" (click)="sendSmsReminder(loan)">✉ Send SMS</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- OFFICIAL GIRVI RELEASE & HANDOVER VOUCHER (Matching orrellns.php) -->
+@if (releaseVoucherModal(); as loan) {
+  <div class="receipt-modal-backdrop" (click)="closeReleaseVoucher()">
+    <div class="receipt-modal" (click)="$event.stopPropagation()">
+      <div class="receipt-modal-header no-print">
+        <h3>Girvi Release & Delivery Voucher</h3>
+        <div style="display:flex; gap:0.5rem;">
+          <button type="button" class="btn btn-emerald" (click)="printReleaseVoucher()">🖨 Print Voucher</button>
+          <button type="button" class="btn-icon-close" (click)="closeReleaseVoucher()">✕</button>
+        </div>
+      </div>
+
+      <div class="receipt-paper">
+        <div class="paper-header">
+          <h2>{{ firmName }}</h2>
+          <p>Official Girvi Loan Settlement & Article Handover Voucher</p>
+          <div class="voucher-tag">RELEASE VOUCHER #{{ loan.releaseTicketNo || ('REL-' + loan.ticketNo) }}</div>
+        </div>
+
+        <div class="paper-meta-grid">
+          <div>
+            <p><strong>Customer Name:</strong> {{ customer()?.name }}</p>
+            <p><strong>Customer Code:</strong> {{ customer()?.code || '—' }}</p>
+            <p><strong>Mobile:</strong> {{ customer()?.phone || '—' }}</p>
+            <p><strong>City:</strong> {{ customer()?.city || '—' }}</p>
+          </div>
+          <div style="text-align:right;">
+            <p><strong>Original Loan Date:</strong> {{ loan.openDate | date:'mediumDate' }}</p>
+            <p><strong>Release Settlement Date:</strong> {{ (loan.releaseDate || loan.updatedAt) | date:'mediumDate' }}</p>
+            <p><strong>Original Ticket No:</strong> #{{ loan.ticketNo }}</p>
+            <p><strong>Status:</strong> <span style="background:#ecfdf5; color:#047857; padding:0.15rem 0.5rem; border-radius:4px; font-weight:800;">SETTLED & RELEASED</span></p>
+          </div>
+        </div>
+
+        <div class="paper-calc-box">
+          <div><span>Principal Disbursed:</span> <strong>₹{{ loan.principalAmount | number:'1.2-2' }}</strong></div>
+          <div><span>Interest Rate:</span> <strong>{{ loan.roiPercent }}% ({{ loan.interestType }})</strong></div>
+          <div><span>Settled Interest:</span> <strong>₹{{ (loan.paidInterest || loan.interestAmount) | number:'1.2-2' }}</strong></div>
+          @if (loan.discountAmount && loan.discountAmount > 0) {
+            <div><span>Waiver/Discount:</span> <strong style="color:#b45309;">- ₹{{ loan.discountAmount | number:'1.2-2' }}</strong></div>
+          }
+          <div class="total-col highlight"><span>Total Amount Paid:</span> <strong>₹{{ (loan.paidAmount || loan.totalAmount) | number:'1.2-2' }}</strong></div>
+        </div>
+
+        <!-- Payment Modes Breakdown -->
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:0.6rem 0.85rem; font-size:0.8rem; margin-bottom:1.25rem; display:flex; justify-content:space-between;">
+          <span>Payment Breakdown:</span>
+          <strong>
+            {{ loan.releaseCashAmount ? 'Cash: ₹' + (loan.releaseCashAmount | number:'1.0-0') : '' }}
+            {{ loan.releaseBankAmount ? ' | Bank: ₹' + (loan.releaseBankAmount | number:'1.0-0') : '' }}
+            {{ loan.releaseOnlineAmount ? ' | UPI: ₹' + (loan.releaseOnlineAmount | number:'1.0-0') : '' }}
+          </strong>
+        </div>
+
+        <h4>Returned Pledged Jewellery Articles:</h4>
+        <table class="receipt-items-table">
+          <thead>
+            <tr>
+              <th>Item Description</th>
+              <th>Metal</th>
+              <th>Qty</th>
+              <th>Net Wt (g)</th>
+              <th>Fine Wt (g)</th>
+              <th>Handover Condition</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (loan.items && loan.items.length) {
+              @for (it of loan.items; track $index) {
+                <tr>
+                  <td>{{ it.itemName }}</td>
+                  <td>{{ it.metalType }}</td>
+                  <td style="text-align:center;">{{ it.quantity }}</td>
+                  <td style="text-align:right;">{{ it.netWeight }} g</td>
+                  <td style="text-align:right;">{{ it.fineWeight }} g</td>
+                  <td style="text-align:center; color:#047857; font-weight:700;">Verified & Returned ✔</td>
+                </tr>
+              }
+            } @else {
+              <tr>
+                <td>{{ loan.itemDesc || 'Gold Jewellery' }}</td>
+                <td>{{ loan.metalType }}</td>
+                <td style="text-align:center;">1</td>
+                <td style="text-align:right;">{{ loan.netWeight }} g</td>
+                <td style="text-align:right;">{{ loan.fineWeight }} g</td>
+                <td style="text-align:center; color:#047857; font-weight:700;">Verified & Returned ✔</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <!-- Customer Handover Declaration -->
+        <div style="margin-top:1.25rem; font-size:0.78rem; line-height:1.5; color:#475569; background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding:0.75rem 1rem;">
+          <strong>Borrower's Handover Declaration:</strong>
+          <p style="margin:0.25rem 0 0;">
+            I hereby acknowledge that I have received all my pledged jewellery articles listed above back in original, sound, and undamaged condition upon full settlement of loan ticket #{{ loan.ticketNo }}. I have no outstanding claims or disputes against {{ firmName }}.
+          </p>
+        </div>
+
+        <div class="receipt-signatures-row" style="margin-top:2.5rem; display:flex; justify-content:space-between;">
+          <div style="border-top:1px solid #94a3b8; width:220px; text-align:center; padding-top:0.5rem; font-size:0.8rem; color:#475569;">
+            Borrower's Signature (Customer)
+          </div>
+          <div style="border-top:1px solid #94a3b8; width:220px; text-align:center; padding-top:0.5rem; font-size:0.8rem; color:#475569;">
+            For {{ firmName }} (Authorized Signatory)
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+}
+
+<!-- FORM 8 — STATUTORY PAWN TICKET / REDEMPTION VOUCHER -->
+@if (form8ModalLoan(); as f8) {
+  <div class="receipt-modal-backdrop" (click)="closeForm8()">
+    <div class="receipt-modal" (click)="$event.stopPropagation()">
+      <div class="receipt-modal-header no-print">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:1.3rem;">📜</span>
+          <h3 style="margin:0;">FORM 8 — Pawn Ticket & Release Voucher</h3>
+        </div>
+        <div class="header-actions">
+          <button type="button" class="btn btn-emerald" (click)="printForm8()">🖨 Print Form 8</button>
+          <button type="button" class="btn-icon-close" (click)="closeForm8()">✕</button>
+        </div>
+      </div>
+
+      <div class="printable-voucher-body">
+        <div class="voucher-shop-head">
+          <h2>{{ firmName || 'HOS JEWELLERS & PAWNBROKERS' }}</h2>
+          <p class="license-info">Licence No: ML/2026/89412 · Pawn Broking Rules Form 8 [Rule 21(1)]</p>
+          <div class="voucher-title">PAWN TICKET & REDEMPTION CERTIFICATE (FORM 8)</div>
+        </div>
+
+        <div class="voucher-meta-grid">
+          <div><span>Ticket No:</span> <strong>#{{ f8.ticketNo }}</strong></div>
+          <div><span>Date of Pledge:</span> <strong>{{ f8.openDate | date:'dd MMM yyyy' }}</strong></div>
+          <div><span>Borrower Name:</span> <strong>{{ customer()?.name || 'Borrower' }}</strong></div>
+          <div><span>Redemption Date:</span> <strong>{{ releaseForm.releaseDate | date:'dd MMM yyyy' }}</strong></div>
+        </div>
+
+        <div class="voucher-financial-summary">
+          <div><span>Principal Sum:</span> <strong>₹{{ f8.principalAmount | number:'1.2-2' }}</strong></div>
+          <div><span>Agreed Interest:</span> <strong>{{ f8.roiPercent }}% / month</strong></div>
+          <div><span>Settlement Due:</span> <strong style="color:#0284c7;">₹{{ releaseForm.totalPayable | number:'1.2-2' }}</strong></div>
+        </div>
+
+        <h4>Pledged Articles:</h4>
+        <table class="receipt-items-table">
+          <thead>
+            <tr>
+              <th>Metal</th>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Gross Wt (g)</th>
+              <th>Net Wt (g)</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ f8.metalType || 'GOLD' }}</td>
+              <td>{{ f8.itemDesc || 'Gold Ornaments' }}</td>
+              <td style="text-align:center;">1</td>
+              <td style="text-align:right;">{{ f8.grossWeight || f8.netWeight }} g</td>
+              <td style="text-align:right;">{{ f8.netWeight }} g</td>
+              <td style="text-align:center; color:#047857; font-weight:700;">Returned / Redeemed</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="margin-top:1.25rem; font-size:0.75rem; line-height:1.5; color:#475569; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:0.75rem 1rem;">
+          <strong>Statutory Declaration:</strong>
+          <p style="margin:0.25rem 0 0;">
+            The pledge stands redeemed upon receipt of all monies due under this contract. The pledged property is restored to the pawner without claim or lien.
+          </p>
+        </div>
+
+        <div class="receipt-signatures-row" style="margin-top:2.5rem; display:flex; justify-content:space-between;">
+          <div style="border-top:1px solid #94a3b8; width:220px; text-align:center; padding-top:0.5rem; font-size:0.8rem; color:#475569;">
+            Signature of Pawner / Borrower
+          </div>
+          <div style="border-top:1px solid #94a3b8; width:220px; text-align:center; padding-top:0.5rem; font-size:0.8rem; color:#475569;">
+            Signature of Pawnbroker / Authorized Signatory
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+
