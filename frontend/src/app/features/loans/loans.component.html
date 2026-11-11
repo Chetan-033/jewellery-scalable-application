@@ -603,9 +603,9 @@
 
         <div class="add-customer-row">
           <span>Need to register a new borrower?</span>
-          <a routerLink="/app/masters/customers/add" (click)="closeNewLoanDialog()" class="link-add-cust">
-            + Add New Customer Form
-          </a>
+          <button type="button" class="link-add-cust" (click)="openQuickAddForLoan()">
+            + Add customer, then open loan
+          </button>
         </div>
       </div>
 
@@ -623,6 +623,12 @@
     </div>
   </div>
 }
+
+<app-quick-add-customer-modal
+  [open]="showQuickAddCustomer()"
+  continueAction="loan"
+  (closed)="closeQuickAddForLoan()"
+/>
 
 <!-- PRINTABLE GIRVI RECEIPT MODAL -->
 @if (printModalLoan(); as loan) {

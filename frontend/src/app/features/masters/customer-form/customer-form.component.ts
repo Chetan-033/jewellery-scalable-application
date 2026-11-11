@@ -1,9 +1,20 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
+import { CustomerValidationConfigService } from '../../../core/customer-validation/customer-validation-config.service';
+import {
+  FieldErrorMap,
+  isFormatValid,
+  normalizeAadhaar,
+  normalizeCustomerForSave,
+  validateCustomer,
+  validateCustomerField
+} from '../../../core/customer-validation/customer-validators';
+import { CustomerFieldKey } from '../../../core/customer-validation/customer-field-rules';
+import { EnterNextFieldDirective } from '../../../shared/enter-next-field.directive';
 
 export interface CustomerFormData {
   id?: string;
@@ -76,18 +87,21 @@ export interface CustomerFormData {
 @Component({
   selector: 'app-customer-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, EnterNextFieldDirective],
   templateUrl: './customer-form.component.html',
   styleUrl: './customer-form.component.scss'
 })
 export class CustomerFormComponent implements OnInit, OnDestroy {
   @ViewChild('videoElement') videoElement?: ElementRef<HTMLVideoElement>;
 
+  private readonly validationConfig = inject(CustomerValidationConfigService);
+
   readonly isEdit = signal(false);
   readonly customerId = signal<string | null>(null);
   readonly message = signal<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
   readonly isSaving = signal(false);
   readonly aadhaarValidationMsg = signal<string | null>(null);
+  readonly fieldErrors = signal<FieldErrorMap>({});
 
   // Webcam modal state
   readonly webcamOpen = signal(false);
@@ -328,35 +342,106 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
     this.activeWebcamTarget = null;
   }
 
+  isRequired(key: CustomerFieldKey): boolean {
+    return this.validationConfig.isRequired('full', key);
+  }
+
+  placeholder(key: CustomerFieldKey): string {
+    return this.validationConfig.placeholder('full', key);
+  }
+
+  fieldError(key: CustomerFieldKey): string | null {
+    return this.fieldErrors()[key] || null;
+  }
+
+  clearFieldError(key: CustomerFieldKey): void {
+    const current = this.fieldErrors();
+    if (!current[key]) return;
+    const next = { ...current };
+    delete next[key];
+    this.fieldErrors.set(next);
+  }
+
+  onFieldBlur(key: CustomerFieldKey): void {
+    const rules = this.validationConfig.getRules('full');
+    const value = (this.form as any)[key] as string;
+    const msg = validateCustomerField(key, value, rules, this.form, 'full');
+    const next = { ...this.fieldErrors() };
+    if (msg) {
+      next[key] = msg;
+    } else {
+      delete next[key];
+    }
+    this.fieldErrors.set(next);
+  }
+
   verifyAadhaar(): void {
-    const raw = (this.form.aadhaarNo || '').replace(/\s+/g, '');
+    const raw = normalizeAadhaar(this.form.aadhaarNo);
     if (!raw) {
       this.aadhaarValidationMsg.set('Please enter an Aadhaar number to verify.');
       return;
     }
-    if (/^\d{12}$/.test(raw)) {
+    if (isFormatValid('aadhaar', raw)) {
       this.aadhaarValidationMsg.set('✓ Aadhaar format is valid (12-digit UIDAI standard).');
+      this.clearFieldError('aadhaarNo');
     } else {
-      this.aadhaarValidationMsg.set('⚠ Invalid Aadhaar number. Must be exactly 12 digits.');
+      this.aadhaarValidationMsg.set('⚠ Invalid Aadhaar number. Must be 12 digits starting with 2–9.');
     }
   }
 
   saveCustomer(): void {
-    if (!this.form.firstName && !this.form.lastName && !this.form.businessName) {
-      this.message.set({ text: 'Please provide at least a First Name or Business Name.', type: 'error' });
+    if (this.isSaving()) return;
+
+    const rules = this.validationConfig.getRules('full');
+    const result = validateCustomer(
+      {
+        firstName: this.form.firstName,
+        lastName: this.form.lastName,
+        businessName: this.form.businessName,
+        phone: this.form.phone,
+        email: this.form.email,
+        pincode: this.form.pincode,
+        panNo: this.form.panNo,
+        gstin: this.form.gstin,
+        aadhaarNo: this.form.aadhaarNo,
+        bankIfscCode: this.form.bankIfscCode,
+        bankAccNo: this.form.bankAccNo
+      },
+      rules,
+      'full'
+    );
+
+    if (!result.valid) {
+      this.fieldErrors.set(result.errors);
+      this.message.set({ text: result.summary || 'Please fix the highlighted fields', type: 'error' });
       return;
     }
 
+    this.fieldErrors.set({});
     this.isSaving.set(true);
     const dates = this.formatDates();
+    const normalized = normalizeCustomerForSave({
+      firstName: this.form.firstName,
+      lastName: this.form.lastName,
+      businessName: this.form.businessName,
+      phone: this.form.phone,
+      email: this.form.email,
+      pincode: this.form.pincode,
+      panNo: this.form.panNo,
+      gstin: this.form.gstin,
+      aadhaarNo: this.form.aadhaarNo,
+      bankIfscCode: this.form.bankIfscCode,
+      bankAccNo: this.form.bankAccNo
+    });
 
-    const fullName = [this.form.firstName, this.form.lastName].filter(Boolean).join(' ').trim()
-      || this.form.businessName;
+    const fullName = [normalized.firstName, this.form.lastName.trim()].filter(Boolean).join(' ').trim()
+      || normalized.businessName
+      || this.form.businessName.trim();
 
     const payload: any = {
       code: this.form.code.trim() || undefined,
       name: fullName,
-      firstName: this.form.firstName.trim() || undefined,
+      firstName: normalized.firstName || undefined,
       lastName: this.form.lastName.trim() || undefined,
       partyType: this.form.partyType,
       title: this.form.title,
@@ -373,14 +458,14 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
       anniversaryDate: dates.anniversaryDate || undefined,
       hos: this.form.hos,
       accountGroup: this.form.accountGroup,
-      panNo: this.form.panNo.trim().toUpperCase() || undefined,
-      gstin: this.form.gstin.trim().toUpperCase() || undefined,
+      panNo: normalized.panNo || undefined,
+      gstin: normalized.gstin || undefined,
       taxNo: this.form.taxNo.trim() || undefined,
-      aadhaarNo: this.form.aadhaarNo.trim() || undefined,
+      aadhaarNo: normalized.aadhaarNo || undefined,
       bankName: this.form.bankName.trim() || undefined,
       bankAccName: this.form.bankAccName.trim() || undefined,
-      bankAccNo: this.form.bankAccNo.trim() || undefined,
-      bankIfscCode: this.form.bankIfscCode.trim().toUpperCase() || undefined,
+      bankAccNo: normalized.bankAccNo || undefined,
+      bankIfscCode: normalized.bankIfscCode || undefined,
       occupation: this.form.occupation.trim() || undefined,
       annualIncome: this.form.annualIncome.trim() || undefined,
       nomineeName: this.form.nomineeName.trim() || undefined,
@@ -389,7 +474,7 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
       loginId: this.form.loginId.trim() || undefined,
       portalPassword: this.form.portalPassword.trim() || undefined,
       masterPassword: this.form.masterPassword.trim() || undefined,
-      businessName: this.form.businessName.trim() || undefined,
+      businessName: normalized.businessName || this.form.businessName.trim() || undefined,
       officeAddress: this.form.officeAddress.trim() || undefined,
       permanentAddress: this.form.permanentAddress.trim() || undefined,
       currentAddress: this.form.currentAddress.trim() || undefined,
@@ -399,11 +484,11 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
       tehsil: this.form.tehsil.trim() || undefined,
       city: this.form.city.trim() || undefined,
       countryName: this.form.countryName.trim() || 'India',
-      pincode: this.form.pincode.trim() || undefined,
+      pincode: normalized.pincode || undefined,
       stateName: this.form.stateName.trim() || undefined,
       otherInfo: this.form.otherInfo.trim() || undefined,
-      phone: this.form.phone.trim() || undefined,
-      email: this.form.email.trim() || undefined,
+      phone: normalized.phone || undefined,
+      email: normalized.email || undefined,
       address: this.form.currentAddress.trim() || this.form.officeAddress.trim() || undefined,
       photoBase64: this.form.photoBase64 || undefined,
       aadhaarFrontBase64: this.form.aadhaarFrontBase64 || undefined,
@@ -440,6 +525,7 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
     this.form = this.emptyForm();
     this.message.set(null);
     this.aadhaarValidationMsg.set(null);
+    this.fieldErrors.set({});
   }
 
   resolveImageUrl(url: string | undefined): string {

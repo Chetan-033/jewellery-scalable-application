@@ -1,10 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
+import { QuickAddCustomerModalComponent } from '../../shared/quick-add-customer-modal/quick-add-customer-modal.component';
 
 interface LedgerRow {
   refNo: string;
@@ -23,7 +23,7 @@ interface RateTick {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, RouterLink, QuickAddCustomerModalComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
@@ -37,29 +37,7 @@ export class DashboardComponent implements OnInit {
   readonly advances = signal<LedgerRow[]>([]);
   readonly rates = signal<RateTick[]>([]);
   readonly showQuickAdd = signal(false);
-  saving = false;
   chartRange: '7d' | '30d' | '90d' = '30d';
-
-  cust = {
-    title: 'Mr.',
-    gender: 'M',
-    firstName: '',
-    lastName: '',
-    spouseName: '',
-    phone: '',
-    altPhone: '',
-    address: '',
-    countryName: 'India',
-    stateName: '',
-    city: '',
-    village: '',
-    pincode: '',
-    gstin: '',
-    panNo: '',
-    aadhaarNo: '',
-    email: '',
-    partyType: 'CUSTOMER'
-  };
 
   readonly displayName = computed(
     () => this.auth.user()?.displayName || this.auth.user()?.username || 'Admin'
@@ -223,34 +201,17 @@ export class DashboardComponent implements OnInit {
     }));
   }
 
-  saveCustomer(): void {
-    if (!this.cust.firstName?.trim() && !this.cust.phone?.trim()) {
-      this.message.set('Enter at least first name or mobile');
-      return;
-    }
-    this.saving = true;
-    this.http.post(`${environment.apiBaseUrl}/masters/customers`, this.cust).subscribe({
-      next: () => {
-        this.message.set('Customer saved');
-        this.saving = false;
-        this.cust = {
-          ...this.cust,
-          firstName: '',
-          lastName: '',
-          phone: '',
-          spouseName: '',
-          address: '',
-          aadhaarNo: '',
-          panNo: '',
-          gstin: '',
-          email: ''
-        };
-      },
-      error: (err) => {
-        this.saving = false;
-        this.message.set(err?.error?.message || 'Customer save failed');
-      }
-    });
+  openQuickAdd(): void {
+    this.showQuickAdd.set(true);
+  }
+
+  closeQuickAdd(): void {
+    this.showQuickAdd.set(false);
+  }
+
+  onCustomerSaved(): void {
+    this.message.set('Customer saved');
+    this.reloadLedgers();
   }
 
   go(path: string, query?: Record<string, string>): void {

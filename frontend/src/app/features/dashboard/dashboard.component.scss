@@ -443,33 +443,15 @@
   font-weight: 600;
 }
 
-/* ——— Tables / quick add ——— */
+/* ——— Tables ——— */
 .ledger-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.85rem;
 }
 
-.table-card,
-.home-customer {
+.table-card {
   padding: 1.05rem 1.15rem 1.15rem;
-}
-
-.form-grid.dense {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-}
-
-.row-actions {
-  display: flex;
-  gap: 0.55rem;
-  margin-top: 0.9rem;
-  flex-wrap: wrap;
-}
-
-.quick-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
 }
 
 @media (max-width: 1100px) {
@@ -481,7 +463,6 @@
 @media (max-width: 900px) {
   .status-grid,
   .ledger-row { grid-template-columns: 1fr; }
-  .form-grid.dense { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .welcome { padding: 1.25rem 1.15rem; }
 }
 

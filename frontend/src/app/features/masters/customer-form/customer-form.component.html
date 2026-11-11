@@ -18,7 +18,7 @@
     </div>
   }
 
-  <form class="erp-form-container" (submit)="$event.preventDefault(); saveCustomer()">
+  <form class="erp-form-container" appEnterNextField (submit)="$event.preventDefault(); saveCustomer()">
 
     <!-- 1. PERSONAL INFORMATION BOX -->
     <fieldset class="form-section personal-section">
@@ -68,8 +68,20 @@
             </select>
           </div>
 
-          <div class="input-cell">
-            <input type="text" [(ngModel)]="form.firstName" name="firstName" placeholder="First Name *" class="erp-input" required />
+          <div class="input-cell" [class.has-error]="fieldError('firstName')">
+            <input
+              type="text"
+              [(ngModel)]="form.firstName"
+              name="firstName"
+              [placeholder]="placeholder('firstName')"
+              class="erp-input"
+              [class.invalid]="fieldError('firstName')"
+              (ngModelChange)="clearFieldError('firstName')"
+              (blur)="onFieldBlur('firstName')"
+            />
+            @if (fieldError('firstName')) {
+              <span class="field-error">{{ fieldError('firstName') }}</span>
+            }
           </div>
 
           <div class="input-cell">
@@ -206,17 +218,56 @@
 
         <!-- Row 1: PAN, GSTIN, TAX NO, Aadhaar -->
         <div class="form-row row-4">
-          <div class="input-cell">
-            <input type="text" [(ngModel)]="form.panNo" name="panNo" placeholder="PAN Number" maxlength="10" class="erp-input uppercase" />
+          <div class="input-cell" [class.has-error]="fieldError('panNo')">
+            <input
+              type="text"
+              [(ngModel)]="form.panNo"
+              name="panNo"
+              [placeholder]="placeholder('panNo')"
+              maxlength="10"
+              class="erp-input uppercase"
+              [class.invalid]="fieldError('panNo')"
+              (ngModelChange)="clearFieldError('panNo')"
+              (blur)="onFieldBlur('panNo')"
+            />
+            @if (fieldError('panNo')) {
+              <span class="field-error">{{ fieldError('panNo') }}</span>
+            }
           </div>
-          <div class="input-cell">
-            <input type="text" [(ngModel)]="form.gstin" name="gstin" placeholder="GSTIN" maxlength="15" class="erp-input uppercase" />
+          <div class="input-cell" [class.has-error]="fieldError('gstin')">
+            <input
+              type="text"
+              [(ngModel)]="form.gstin"
+              name="gstin"
+              [placeholder]="placeholder('gstin')"
+              maxlength="15"
+              class="erp-input uppercase"
+              [class.invalid]="fieldError('gstin')"
+              (ngModelChange)="clearFieldError('gstin')"
+              (blur)="onFieldBlur('gstin')"
+            />
+            @if (fieldError('gstin')) {
+              <span class="field-error">{{ fieldError('gstin') }}</span>
+            }
           </div>
           <div class="input-cell">
             <input type="text" [(ngModel)]="form.taxNo" name="taxNo" placeholder="TAX NO" class="erp-input" />
           </div>
-          <div class="input-cell">
-            <input type="text" [(ngModel)]="form.aadhaarNo" name="aadhaarNo" placeholder="Adhaar Card Number" maxlength="12" class="erp-input" />
+          <div class="input-cell" [class.has-error]="fieldError('aadhaarNo')">
+            <input
+              type="text"
+              [(ngModel)]="form.aadhaarNo"
+              name="aadhaarNo"
+              [placeholder]="placeholder('aadhaarNo')"
+              maxlength="12"
+              class="erp-input"
+              [class.invalid]="fieldError('aadhaarNo')"
+              (ngModelChange)="clearFieldError('aadhaarNo')"
+              (blur)="onFieldBlur('aadhaarNo')"
+            />
+            @if (fieldError('aadhaarNo')) {
+              <span class="field-error">{{ fieldError('aadhaarNo') }}</span>
+            }
           </div>
         </div>
 
@@ -228,11 +279,36 @@
           <div class="input-cell">
             <input type="text" [(ngModel)]="form.bankAccName" name="bankAccName" placeholder="BANK ACC NAME" class="erp-input" />
           </div>
-          <div class="input-cell">
-            <input type="text" [(ngModel)]="form.bankAccNo" name="bankAccNo" placeholder="BANK ACC NO" class="erp-input" />
+          <div class="input-cell" [class.has-error]="fieldError('bankAccNo')">
+            <input
+              type="text"
+              [(ngModel)]="form.bankAccNo"
+              name="bankAccNo"
+              [placeholder]="placeholder('bankAccNo')"
+              class="erp-input"
+              [class.invalid]="fieldError('bankAccNo')"
+              (ngModelChange)="clearFieldError('bankAccNo')"
+              (blur)="onFieldBlur('bankAccNo')"
+            />
+            @if (fieldError('bankAccNo')) {
+              <span class="field-error">{{ fieldError('bankAccNo') }}</span>
+            }
           </div>
-          <div class="input-cell">
-            <input type="text" [(ngModel)]="form.bankIfscCode" name="bankIfscCode" placeholder="BANK IFSC CODE" maxlength="11" class="erp-input uppercase" />
+          <div class="input-cell" [class.has-error]="fieldError('bankIfscCode')">
+            <input
+              type="text"
+              [(ngModel)]="form.bankIfscCode"
+              name="bankIfscCode"
+              [placeholder]="placeholder('bankIfscCode')"
+              maxlength="11"
+              class="erp-input uppercase"
+              [class.invalid]="fieldError('bankIfscCode')"
+              (ngModelChange)="clearFieldError('bankIfscCode')"
+              (blur)="onFieldBlur('bankIfscCode')"
+            />
+            @if (fieldError('bankIfscCode')) {
+              <span class="field-error">{{ fieldError('bankIfscCode') }}</span>
+            }
           </div>
         </div>
 
@@ -280,7 +356,19 @@
         <div class="section-body">
 
           <div class="form-row row-full">
-            <input type="text" [(ngModel)]="form.businessName" name="businessName" placeholder="SHOP NAME/BUSINESS NAME" class="erp-input" />
+            <input
+              type="text"
+              [(ngModel)]="form.businessName"
+              name="businessName"
+              [placeholder]="placeholder('businessName')"
+              class="erp-input"
+              [class.invalid]="fieldError('businessName')"
+              (ngModelChange)="clearFieldError('businessName')"
+              (blur)="onFieldBlur('businessName')"
+            />
+            @if (fieldError('businessName')) {
+              <span class="field-error">{{ fieldError('businessName') }}</span>
+            }
           </div>
 
           <div class="form-row row-full">
@@ -322,8 +410,21 @@
           </div>
 
           <div class="form-row row-2">
-            <div class="input-cell">
-              <input type="text" [(ngModel)]="form.pincode" name="pincode" placeholder="PIN CODE" maxlength="6" class="erp-input" />
+            <div class="input-cell" [class.has-error]="fieldError('pincode')">
+              <input
+                type="text"
+                [(ngModel)]="form.pincode"
+                name="pincode"
+                [placeholder]="placeholder('pincode')"
+                maxlength="6"
+                class="erp-input"
+                [class.invalid]="fieldError('pincode')"
+                (ngModelChange)="clearFieldError('pincode')"
+                (blur)="onFieldBlur('pincode')"
+              />
+              @if (fieldError('pincode')) {
+                <span class="field-error">{{ fieldError('pincode') }}</span>
+              }
             </div>
             <div class="input-cell">
               <select [(ngModel)]="form.stateName" name="stateName" class="erp-input">
@@ -334,11 +435,36 @@
           </div>
 
           <div class="form-row row-2">
-            <div class="input-cell">
-              <input type="text" [(ngModel)]="form.phone" name="phone" placeholder="MOBILE NUMBER *" class="erp-input font-bold" />
+            <div class="input-cell" [class.has-error]="fieldError('phone')">
+              <input
+                type="text"
+                [(ngModel)]="form.phone"
+                name="phone"
+                [placeholder]="placeholder('phone')"
+                maxlength="13"
+                class="erp-input font-bold"
+                [class.invalid]="fieldError('phone')"
+                (ngModelChange)="clearFieldError('phone')"
+                (blur)="onFieldBlur('phone')"
+              />
+              @if (fieldError('phone')) {
+                <span class="field-error">{{ fieldError('phone') }}</span>
+              }
             </div>
-            <div class="input-cell">
-              <input type="email" [(ngModel)]="form.email" name="email" placeholder="EMAIL ADDRESS" class="erp-input" />
+            <div class="input-cell" [class.has-error]="fieldError('email')">
+              <input
+                type="email"
+                [(ngModel)]="form.email"
+                name="email"
+                [placeholder]="placeholder('email')"
+                class="erp-input"
+                [class.invalid]="fieldError('email')"
+                (ngModelChange)="clearFieldError('email')"
+                (blur)="onFieldBlur('email')"
+              />
+              @if (fieldError('email')) {
+                <span class="field-error">{{ fieldError('email') }}</span>
+              }
             </div>
           </div>
 

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { QuickAddCustomerModalComponent } from '../../shared/quick-add-customer-modal/quick-add-customer-modal.component';
 
 export interface LoanRecord {
   id: string;
@@ -74,7 +75,7 @@ interface CustomerOption {
 @Component({
   selector: 'app-loans',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, QuickAddCustomerModalComponent],
   templateUrl: './loans.component.html',
   styleUrl: './loans.component.scss'
 })
@@ -91,6 +92,7 @@ export class LoansComponent implements OnInit {
 
   // Quick New Loan Modal state
   readonly isNewLoanModalOpen = signal(false);
+  readonly showQuickAddCustomer = signal(false);
   selectedCustomerIdForNewLoan = '';
   firmName = 'Local Jewellery Shop';
 
@@ -764,6 +766,7 @@ export class LoansComponent implements OnInit {
 
   // Quick New Loan: Open modal to pick customer
   openNewLoanDialog(): void {
+    this.showQuickAddCustomer.set(false);
     this.isNewLoanModalOpen.set(true);
   }
 
@@ -772,12 +775,22 @@ export class LoansComponent implements OnInit {
     this.selectedCustomerIdForNewLoan = '';
   }
 
+  openQuickAddForLoan(): void {
+    this.closeNewLoanDialog();
+    this.showQuickAddCustomer.set(true);
+  }
+
+  closeQuickAddForLoan(): void {
+    this.showQuickAddCustomer.set(false);
+  }
+
   proceedToCustomerLoanForm(): void {
     if (!this.selectedCustomerIdForNewLoan) {
       alert('Please select a customer first');
       return;
     }
-    this.router.navigate(['/app/customers', this.selectedCustomerIdForNewLoan], {
+    this.closeNewLoanDialog();
+    void this.router.navigate(['/app/customers', this.selectedCustomerIdForNewLoan], {
       queryParams: { action: 'add-loan' }
     });
   }
