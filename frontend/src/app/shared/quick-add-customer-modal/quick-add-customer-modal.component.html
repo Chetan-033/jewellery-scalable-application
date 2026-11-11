@@ -1,0 +1,216 @@
+@if (open) {
+  <div class="modal-backdrop" (click)="onBackdropClick()" role="dialog" aria-modal="true" aria-labelledby="quick-add-customer-title">
+    <div class="modal-card" appEnterNextField (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h3 id="quick-add-customer-title">Quick add customer</h3>
+          <p>Capture a party without leaving this screen</p>
+        </div>
+        <button type="button" class="btn-icon-close" (click)="close()" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        @if (message()) {
+          <p class="flash" [class.err]="hasFieldErrors() || !(message() || '').toLowerCase().includes('saved')">
+            {{ message() }}
+          </p>
+        }
+
+        <div class="form-grid dense">
+          <div class="field" [class.has-error]="fieldError('phone')">
+            <label for="qa-mobile">Mobile @if (isRequired('phone')) { <span class="req">*</span> }</label>
+            <input
+              id="qa-mobile"
+              [(ngModel)]="cust.phone"
+              name="qaPhone"
+              autocomplete="tel"
+              maxlength="13"
+              [placeholder]="placeholder('phone')"
+              (ngModelChange)="clearFieldError('phone')"
+              (blur)="onFieldBlur('phone')"
+            />
+            @if (fieldError('phone')) {
+              <span class="field-error">{{ fieldError('phone') }}</span>
+            }
+          </div>
+          <div class="field" [class.has-error]="fieldError('altPhone')">
+            <label for="qa-alt">Phone</label>
+            <input
+              id="qa-alt"
+              [(ngModel)]="cust.altPhone"
+              name="qaAltPhone"
+              maxlength="13"
+              [placeholder]="placeholder('altPhone')"
+              (ngModelChange)="clearFieldError('altPhone')"
+              (blur)="onFieldBlur('altPhone')"
+            />
+            @if (fieldError('altPhone')) {
+              <span class="field-error">{{ fieldError('altPhone') }}</span>
+            }
+          </div>
+          <div class="field">
+            <label for="qa-title">Title</label>
+            <select id="qa-title" [(ngModel)]="cust.title" name="qaTitle">
+              <option>Mr.</option>
+              <option>Ms.</option>
+              <option>Mrs.</option>
+            </select>
+          </div>
+          <div class="field" [class.has-error]="fieldError('firstName')">
+            <label for="qa-fn">First name @if (isRequired('firstName')) { <span class="req">*</span> }</label>
+            <input
+              id="qa-fn"
+              [(ngModel)]="cust.firstName"
+              name="qaFirstName"
+              autocomplete="given-name"
+              [placeholder]="placeholder('firstName')"
+              (ngModelChange)="clearFieldError('firstName')"
+              (blur)="onFieldBlur('firstName')"
+            />
+            @if (fieldError('firstName')) {
+              <span class="field-error">{{ fieldError('firstName') }}</span>
+            }
+          </div>
+          <div class="field">
+            <label for="qa-ln">Last name</label>
+            <input id="qa-ln" [(ngModel)]="cust.lastName" name="qaLastName" placeholder="Optional" autocomplete="family-name" />
+          </div>
+          <div class="field">
+            <label for="qa-gen">Gender</label>
+            <select id="qa-gen" [(ngModel)]="cust.gender" name="qaGender">
+              <option value="M">M</option>
+              <option value="F">F</option>
+            </select>
+          </div>
+          <div class="field span-2">
+            <label for="qa-spouse">Spouse / Relative</label>
+            <input id="qa-spouse" [(ngModel)]="cust.spouseName" name="qaSpouse" placeholder="Optional" />
+          </div>
+          <div class="field span-3">
+            <label for="qa-addr">Address</label>
+            <input id="qa-addr" [(ngModel)]="cust.address" name="qaAddress" placeholder="Optional" />
+          </div>
+          <div class="field">
+            <label for="qa-country">Country</label>
+            <input id="qa-country" [(ngModel)]="cust.countryName" name="qaCountry" placeholder="India" />
+          </div>
+          <div class="field">
+            <label for="qa-state">State</label>
+            <input id="qa-state" [(ngModel)]="cust.stateName" name="qaState" placeholder="Optional" />
+          </div>
+          <div class="field">
+            <label for="qa-city">City</label>
+            <input id="qa-city" [(ngModel)]="cust.city" name="qaCity" placeholder="Optional" />
+          </div>
+          <div class="field">
+            <label for="qa-village">Village</label>
+            <input id="qa-village" [(ngModel)]="cust.village" name="qaVillage" placeholder="Optional" />
+          </div>
+          <div class="field" [class.has-error]="fieldError('pincode')">
+            <label for="qa-pin">Pincode</label>
+            <input
+              id="qa-pin"
+              [(ngModel)]="cust.pincode"
+              name="qaPincode"
+              maxlength="6"
+              [placeholder]="placeholder('pincode')"
+              (ngModelChange)="clearFieldError('pincode')"
+              (blur)="onFieldBlur('pincode')"
+            />
+            @if (fieldError('pincode')) {
+              <span class="field-error">{{ fieldError('pincode') }}</span>
+            }
+          </div>
+          <div class="field" [class.has-error]="fieldError('gstin')">
+            <label for="qa-gst">GSTIN</label>
+            <input
+              id="qa-gst"
+              [(ngModel)]="cust.gstin"
+              name="qaGstin"
+              maxlength="15"
+              class="uppercase"
+              [placeholder]="placeholder('gstin')"
+              (ngModelChange)="clearFieldError('gstin')"
+              (blur)="onFieldBlur('gstin')"
+            />
+            @if (fieldError('gstin')) {
+              <span class="field-error">{{ fieldError('gstin') }}</span>
+            }
+          </div>
+          <div class="field" [class.has-error]="fieldError('panNo')">
+            <label for="qa-pan">PAN</label>
+            <input
+              id="qa-pan"
+              [(ngModel)]="cust.panNo"
+              name="qaPan"
+              maxlength="10"
+              class="uppercase"
+              [placeholder]="placeholder('panNo')"
+              (ngModelChange)="clearFieldError('panNo')"
+              (blur)="onFieldBlur('panNo')"
+            />
+            @if (fieldError('panNo')) {
+              <span class="field-error">{{ fieldError('panNo') }}</span>
+            }
+          </div>
+          <div class="field" [class.has-error]="fieldError('aadhaarNo')">
+            <label for="qa-aadhaar">Aadhaar</label>
+            <input
+              id="qa-aadhaar"
+              [(ngModel)]="cust.aadhaarNo"
+              name="qaAadhaar"
+              maxlength="12"
+              [placeholder]="placeholder('aadhaarNo')"
+              (ngModelChange)="clearFieldError('aadhaarNo')"
+              (blur)="onFieldBlur('aadhaarNo')"
+            />
+            @if (fieldError('aadhaarNo')) {
+              <span class="field-error">{{ fieldError('aadhaarNo') }}</span>
+            }
+          </div>
+          <div class="field" [class.has-error]="fieldError('email')">
+            <label for="qa-email">Email</label>
+            <input
+              id="qa-email"
+              type="email"
+              [(ngModel)]="cust.email"
+              name="qaEmail"
+              [placeholder]="placeholder('email')"
+              (ngModelChange)="clearFieldError('email')"
+              (blur)="onFieldBlur('email')"
+            />
+            @if (fieldError('email')) {
+              <span class="field-error">{{ fieldError('email') }}</span>
+            }
+          </div>
+        </div>
+
+        <div class="quick-links">
+          <button type="button" class="btn btn-sm btn-danger" [disabled]="saving()" (click)="saveAndGoSale()">
+            Sell
+          </button>
+          <button type="button" class="btn btn-sm btn-info" [disabled]="saving()" (click)="saveAndGoLoan()">
+            Loan
+          </button>
+          <button type="button" class="btn btn-sm btn-warn" [disabled]="saving()" (click)="saveAndGoUdhaar()">
+            Udhaar
+          </button>
+          <a routerLink="/app/masters/customers/add" class="btn btn-sm btn-ghost" (click)="close()">Full form</a>
+        </div>
+        <p class="action-hint">
+          Loan / Sell / Udhaar first saves this customer, then opens that customer’s next step.
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <a routerLink="/app/masters" class="btn btn-ghost" (click)="close()">Customer list</a>
+        <div class="footer-actions">
+          <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="close()">Cancel</button>
+          <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="saveCustomer()">
+            {{ saving() ? 'Saving…' : 'Save customer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
