@@ -10,10 +10,14 @@ import com.jewellery.erp.masterdata.repository.MetalRepository;
 import com.jewellery.erp.masterdata.repository.PurityRepository;
 import com.jewellery.erp.masterdata.repository.SupplierRepository;
 import com.jewellery.erp.organization.application.DocumentNumberService;
+import com.jewellery.erp.shared.api.PageRequests;
+import com.jewellery.erp.shared.api.PageResponse;
 import com.jewellery.erp.shared.domain.BusinessException;
 import com.jewellery.erp.shared.domain.NotFoundException;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -104,11 +108,13 @@ public class MasterDataService {
     }
 
     @Transactional(readOnly = true)
-    public List<MasterDataDtos.CustomerResponse> listCustomers(String q) {
-        List<Customer> rows = (q == null || q.isBlank())
-                ? customerRepository.findAll()
-                : customerRepository.search(q.trim());
-        return rows.stream().map(this::toCustomer).toList();
+    public PageResponse<MasterDataDtos.CustomerSummary> listCustomers(String q, Integer page, Integer size) {
+        String query = q == null ? "" : q.trim();
+        Page<Customer> rows = customerRepository.searchPage(
+                query,
+                PageRequests.of(page, size, Sort.by(Sort.Direction.ASC, "name"))
+        );
+        return PageResponse.from(rows.map(this::toCustomerSummary));
     }
 
     private void applyCustomerFields(Customer customer, MasterDataDtos.CustomerRequest request) {
@@ -163,8 +169,15 @@ public class MasterDataService {
         customer.setNomineeRelation(trim(request.nomineeRelation()));
         customer.setDesignation(trim(request.designation()));
         customer.setLoginId(trim(request.loginId()));
-        customer.setPortalPassword(trim(request.portalPassword()));
-        customer.setMasterPassword(trim(request.masterPassword()));
+        // Passwords: store only when explicitly provided; never clear on blank update; never return via API.
+        String portalPassword = trim(request.portalPassword());
+        if (portalPassword != null && !portalPassword.isBlank()) {
+            customer.setPortalPassword(portalPassword);
+        }
+        String masterPassword = trim(request.masterPassword());
+        if (masterPassword != null && !masterPassword.isBlank()) {
+            customer.setMasterPassword(masterPassword);
+        }
         customer.setBusinessName(trim(request.businessName()));
         customer.setOfficeAddress(trim(request.officeAddress()));
         customer.setPermanentAddress(trim(request.permanentAddress()));
@@ -258,6 +271,21 @@ public class MasterDataService {
         return value == null ? null : value.trim();
     }
 
+    private MasterDataDtos.CustomerSummary toCustomerSummary(Customer c) {
+        return new MasterDataDtos.CustomerSummary(
+                c.getId(),
+                c.getCode(),
+                c.getName(),
+                c.getFirstName(),
+                c.getLastName(),
+                c.getPhone(),
+                c.getCity(),
+                c.getStatus(),
+                c.getPartyType(),
+                c.getGstin()
+        );
+    }
+
     private MasterDataDtos.CustomerResponse toCustomer(Customer c) {
         return new MasterDataDtos.CustomerResponse(
                 c.getId(), c.getCode(), c.getName(), c.getFirstName(), c.getLastName(), c.getFatherName(),
@@ -268,7 +296,9 @@ public class MasterDataService {
                 c.getSpouseDob(), c.getCaste(), c.getQualification(), c.getMaritalStatus(), c.getAnniversaryDate(),
                 c.getTaxNo(), c.getBankName(), c.getBankAccName(), c.getBankAccNo(), c.getBankIfscCode(),
                 c.getOccupation(), c.getAnnualIncome(), c.getNomineeName(), c.getNomineeRelation(),
-                c.getDesignation(), c.getLoginId(), c.getPortalPassword(), c.getMasterPassword(),
+                c.getDesignation(), c.getLoginId(),
+                null, // portalPassword — never expose
+                null, // masterPassword — never expose
                 c.getBusinessName(), c.getOfficeAddress(), c.getPermanentAddress(), c.getCurrentAddress(),
                 c.getShippingAddress(), c.getWardNumber(), c.getTehsil(), c.getOtherInfo(),
                 c.getPhotoBase64(), c.getAadhaarFrontBase64(), c.getAadhaarFrontDesc(),

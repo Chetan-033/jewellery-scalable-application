@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ApiPage, pageContent } from '../../core/api-page';
 
 @Component({
   selector: 'app-purchase',
@@ -41,7 +42,9 @@ export class PurchaseComponent implements OnInit {
     this.http.get<any[]>(`${environment.apiBaseUrl}/masters/suppliers`).subscribe({ next: (r) => this.suppliers.set(r) });
     this.http.get<any[]>(`${environment.apiBaseUrl}/masters/metals`).subscribe({ next: (r) => this.metals.set(r) });
     this.http.get<any[]>(`${environment.apiBaseUrl}/masters/purities`).subscribe({ next: (r) => this.purities.set(r) });
-    this.http.get<any[]>(`${environment.apiBaseUrl}/inventory/items`).subscribe({ next: (r) => this.items.set(r) });
+    this.http.get<ApiPage<any>>(`${environment.apiBaseUrl}/inventory/items`, {
+      params: { page: 0, size: 100 }
+    }).subscribe({ next: (r) => this.items.set(pageContent(r)), error: () => this.items.set([]) });
     this.http.get<any[]>(`${environment.apiBaseUrl}/purchase/invoices`).subscribe({ next: (r) => this.invoices.set(r) });
   }
 

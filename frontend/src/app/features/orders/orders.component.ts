@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ApiPage, pageContent } from '../../core/api-page';
 
 @Component({
   selector: 'app-orders',
@@ -39,7 +40,9 @@ export class OrdersComponent implements OnInit {
   }
 
   reload(): void {
-    this.http.get<any[]>(`${environment.apiBaseUrl}/masters/customers`).subscribe({ next: (r) => this.customers.set(r) });
+    this.http.get<ApiPage<any>>(`${environment.apiBaseUrl}/masters/customers`, {
+      params: { page: 0, size: 100 }
+    }).subscribe({ next: (r) => this.customers.set(pageContent(r)), error: () => this.customers.set([]) });
     this.http.get<any[]>(`${environment.apiBaseUrl}/masters/metals`).subscribe({ next: (r) => this.metals.set(r) });
     this.http.get<any[]>(`${environment.apiBaseUrl}/orders`).subscribe({ next: (r) => this.orders.set(r) });
   }

@@ -1,5 +1,7 @@
 package com.jewellery.erp.masterdata.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -54,7 +56,9 @@ public final class MasterDataDtos {
             @Size(max = 64) String nomineeRelation,
             @Size(max = 100) String designation,
             @Size(max = 64) String loginId,
+            @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
             @Size(max = 128) String portalPassword,
+            @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
             @Size(max = 128) String masterPassword,
             @Size(max = 255) String businessName,
             @Size(max = 500) String officeAddress,
@@ -70,6 +74,21 @@ public final class MasterDataDtos {
             String aadhaarBackBase64,
             @Size(max = 255) String aadhaarBackDesc,
             Boolean sendWelcomeSms
+    ) {
+    }
+
+    /** Light row for grids / pickers — no KYC blobs or passwords. */
+    public record CustomerSummary(
+            String id,
+            String code,
+            String name,
+            String firstName,
+            String lastName,
+            String phone,
+            String city,
+            String status,
+            String partyType,
+            String gstin
     ) {
     }
 
@@ -118,8 +137,8 @@ public final class MasterDataDtos {
             String nomineeRelation,
             String designation,
             String loginId,
-            String portalPassword,
-            String masterPassword,
+            @JsonIgnore String portalPassword,
+            @JsonIgnore String masterPassword,
             String businessName,
             String officeAddress,
             String permanentAddress,

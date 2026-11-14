@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ApiPage, pageContent } from '../../core/api-page';
 
 interface Customer { id: string; code: string; name: string; phone?: string; }
 interface Entry {
@@ -37,12 +38,15 @@ export class CreditComponent implements OnInit {
     this.http.get<Array<{ id: string }>>(`${environment.apiBaseUrl}/organization/branches`).subscribe({
       next: (rows) => { if (rows[0]) this.branchId = rows[0].id; }
     });
-    this.http.get<Customer[]>(`${environment.apiBaseUrl}/masters/customers`).subscribe({
-      next: (rows) => {
-        this.customers.set(rows);
+    this.http.get<ApiPage<Customer>>(`${environment.apiBaseUrl}/masters/customers`, {
+      params: { page: 0, size: 100 }
+    }).subscribe({
+      next: (page) => {
+        this.customers.set(pageContent(page));
         const qid = this.route.snapshot.queryParamMap.get('customerId');
         if (qid) { this.customerId = qid; this.loadCustomerLedger(); }
-      }
+      },
+      error: () => this.customers.set([])
     });
     this.reloadTops();
   }

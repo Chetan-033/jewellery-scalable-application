@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ApiPage, pageContent, pageTotal } from '../../core/api-page';
 import { QuickAddCustomerModalComponent } from '../../shared/quick-add-customer-modal/quick-add-customer-modal.component';
 
 export interface LoanRecord {
@@ -130,11 +131,16 @@ export class LoansComponent implements OnInit {
   };
 
   openQuickView(loan: LoanRecord, mode: 'DETAILS' | 'RECEIPT' | 'RELEASE' = 'DETAILS'): void {
-    this.quickViewLoan.set(loan);
     this.loanViewMode.set(mode);
     if (mode === 'RELEASE') {
       this.openReleaseDialog(loan);
+      return;
     }
+    this.quickViewLoan.set(loan);
+    this.http.get<LoanRecord>(`${environment.apiBaseUrl}/loans/${loan.id}`).subscribe({
+      next: (full) => this.quickViewLoan.set(full),
+      error: () => this.quickViewLoan.set(loan)
+    });
   }
 
   closeQuickView(): void {
@@ -172,7 +178,8 @@ export class LoansComponent implements OnInit {
   globalSearch = '';
   pageSize = 25;
   currentPage = 1;
-  readonly pageSizes = [10, 25, 50, 100, 500];
+  serverTotalElements = 0;
+  readonly pageSizes = [10, 25, 50, 100, 200];
 
   // Column search filters
   colFilter = {
@@ -278,18 +285,41 @@ export class LoansComponent implements OnInit {
   }
 
   loadCustomers(): void {
-    this.http.get<CustomerOption[]>(`${environment.apiBaseUrl}/masters/customers`).subscribe({
-      next: (custs) => this.customers.set(custs),
+    this.http.get<ApiPage<CustomerOption>>(`${environment.apiBaseUrl}/masters/customers`, {
+      params: { page: '0', size: '100' }
+    }).subscribe({
+      next: (page) => this.customers.set(pageContent(page)),
       error: () => this.customers.set([])
     });
   }
 
   loadLoans(): void {
-    this.http.get<LoanRecord[]>(`${environment.apiBaseUrl}/loans`, { params: { status: 'ALL' } }).subscribe({
-      next: (data) => this.allLoans.set(data),
+    const tab = this.activeTab();
+    const status =
+      tab === 'TALLY' || tab === 'LOSS' || tab === 'EMI' || tab === 'SHOPKEEPER' || tab === 'TRANSFERRED'
+        ? 'ALL'
+        : tab === 'SETUP'
+          ? 'ACTIVE'
+          : tab;
+
+    const size = Math.min(Math.max(this.pageSize > 0 ? this.pageSize : 25, 1), 200);
+    this.http.get<ApiPage<LoanRecord>>(`${environment.apiBaseUrl}/loans`, {
+      params: {
+        status,
+        page: String(Math.max(0, this.currentPage - 1)),
+        size: String(size),
+        includeItems: 'false'
+      }
+    }).subscribe({
+      next: (page) => {
+        const rows = pageContent(page);
+        this.allLoans.set(rows);
+        this.serverTotalElements = pageTotal(page, rows.length);
+      },
       error: () => {
         this.message.set({ text: 'Failed to fetch loans from server', type: 'error' });
         this.allLoans.set([]);
+        this.serverTotalElements = 0;
       }
     });
   }
@@ -297,6 +327,7 @@ export class LoansComponent implements OnInit {
   setTab(tab: 'ACTIVE' | 'RELEASED' | 'AUCTIONED' | 'LOSS' | 'TRANSFERRED' | 'TALLY' | 'EMI' | 'SHOPKEEPER' | 'SETUP'): void {
     this.activeTab.set(tab);
     this.currentPage = 1;
+    this.loadLoans();
   }
 
   // Filter loans based on active tab
@@ -414,35 +445,36 @@ export class LoansComponent implements OnInit {
     return Number(this.filteredLoans().reduce((acc, l) => acc + (Number(l.netWeight) || 0), 0).toFixed(3));
   });
 
-  // Paginated loans
-  readonly paginatedLoans = computed(() => {
-    const list = this.filteredLoans();
-    if (this.pageSize === -1) return list; // All
-    const start = (this.currentPage - 1) * this.pageSize;
-    return list.slice(start, start + this.pageSize);
-  });
+  // Server already returns one page; keep client filters on that page only.
+  readonly paginatedLoans = computed(() => this.filteredLoans());
 
   get totalPages(): number {
-    if (this.pageSize === -1 || this.filteredLoans().length === 0) return 1;
-    return Math.ceil(this.filteredLoans().length / this.pageSize);
+    if (this.pageSize <= 0 || this.serverTotalElements === 0) return 1;
+    return Math.max(1, Math.ceil(this.serverTotalElements / this.pageSize));
   }
 
   get activeLoansCount(): number {
-    return this.allLoans().filter(l => l.status === 'ACTIVE').length;
+    return this.activeTab() === 'ACTIVE'
+      ? this.serverTotalElements
+      : this.allLoans().filter(l => l.status === 'ACTIVE').length;
   }
 
   get releasedLoansCount(): number {
-    return this.allLoans().filter(l => l.status === 'RELEASED').length;
+    return this.activeTab() === 'RELEASED'
+      ? this.serverTotalElements
+      : this.allLoans().filter(l => l.status === 'RELEASED').length;
   }
 
   changePage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
+      this.loadLoans();
     }
   }
 
   onPageSizeChange(): void {
     this.currentPage = 1;
+    this.loadLoans();
   }
 
   // Helper for pipe range or exact search
@@ -511,6 +543,13 @@ export class LoansComponent implements OnInit {
     this.quickViewLoan.set(loan);
     this.releaseModalLoan.set(loan);
     this.loanViewMode.set('RELEASE');
+    // Ensure detail payload (items) is loaded for release UI
+    this.http.get<LoanRecord>(`${environment.apiBaseUrl}/loans/${loan.id}`).subscribe({
+      next: (full) => {
+        this.quickViewLoan.set(full);
+        this.releaseModalLoan.set(full);
+      }
+    });
     const today = new Date().toISOString().split('T')[0];
     this.releaseForm.releaseDate = today;
     this.releaseForm.monthlyInterestOption = 'DD';

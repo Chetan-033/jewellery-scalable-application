@@ -227,6 +227,9 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
         this.form = {
           ...this.emptyForm(),
           ...data,
+          // Never hydrate passwords from API (backend omits them; blank = leave unchanged on save)
+          portalPassword: '',
+          masterPassword: '',
           gender: data.gender || 'F',
           title: data.title || 'Ms.',
           hos: data.hos || 'HOS',
