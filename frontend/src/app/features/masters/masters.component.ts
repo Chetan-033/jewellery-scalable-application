@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ApiPage, pageContent } from '../../core/api-page';
 
 interface Customer {
   id: string; code: string; name: string; phone?: string; city?: string;
@@ -49,9 +50,12 @@ export class MastersComponent implements OnInit {
   }
 
   reload(): void {
-    this.http.get<Customer[]>(`${environment.apiBaseUrl}/masters/customers`, {
-      params: this.q.trim() ? { q: this.q.trim() } : {}
-    }).subscribe({ next: (r) => this.customers.set(r) });
+    const params: Record<string, string | number> = { page: 0, size: 100 };
+    if (this.q.trim()) params['q'] = this.q.trim();
+    this.http.get<ApiPage<Customer>>(`${environment.apiBaseUrl}/masters/customers`, { params }).subscribe({
+      next: (r) => this.customers.set(pageContent(r)),
+      error: () => this.customers.set([])
+    });
     this.http.get<Metal[]>(`${environment.apiBaseUrl}/masters/metals`).subscribe({ next: (r) => this.metals.set(r) });
     this.http.get<Purity[]>(`${environment.apiBaseUrl}/masters/purities`).subscribe({ next: (r) => this.purities.set(r) });
     this.http.get<Supplier[]>(`${environment.apiBaseUrl}/masters/suppliers`).subscribe({

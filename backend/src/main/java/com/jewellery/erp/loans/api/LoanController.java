@@ -1,6 +1,7 @@
 package com.jewellery.erp.loans.api;
 
 import com.jewellery.erp.loans.application.LoanService;
+import com.jewellery.erp.shared.api.PageResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,8 +31,12 @@ public class LoanController {
     }
 
     @GetMapping
-    public List<LoanDtos.LoanResponse> list(@RequestParam(defaultValue = "ACTIVE") String status) {
-        return loanService.listActive(status);
+    public PageResponse<LoanDtos.LoanResponse> list(
+            @RequestParam(defaultValue = "ACTIVE") String status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(defaultValue = "false") boolean includeItems) {
+        return loanService.listActive(status, page, size, includeItems);
     }
 
     @GetMapping("/{id}")

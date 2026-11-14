@@ -1,6 +1,7 @@
 package com.jewellery.erp.masterdata.api;
 
 import com.jewellery.erp.masterdata.application.MasterDataService;
+import com.jewellery.erp.shared.api.PageResponse;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -41,8 +42,11 @@ public class MasterDataController {
     }
 
     @GetMapping("/customers")
-    public List<MasterDataDtos.CustomerResponse> customers(@RequestParam(required = false) String q) {
-        return masterDataService.listCustomers(q);
+    public PageResponse<MasterDataDtos.CustomerSummary> customers(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return masterDataService.listCustomers(q, page, size);
     }
 
     @PostMapping("/metals")

@@ -16,9 +16,13 @@ import com.jewellery.erp.masterdata.domain.Purity;
 import com.jewellery.erp.masterdata.repository.PurityRepository;
 import com.jewellery.erp.organization.application.DocumentNumberService;
 import com.jewellery.erp.organization.repository.BranchRepository;
+import com.jewellery.erp.shared.api.PageRequests;
+import com.jewellery.erp.shared.api.PageResponse;
 import com.jewellery.erp.shared.domain.BusinessException;
 import com.jewellery.erp.shared.domain.MoneyMath;
 import com.jewellery.erp.shared.domain.NotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -223,8 +227,11 @@ public class AddStockService {
     }
 
     @Transactional(readOnly = true)
-    public List<InventoryDtos.StockEntryResponse> listEntries() {
-        return stockEntryRepository.findAllByOrderByCreatedAtDesc().stream().map(this::toResponse).toList();
+    public PageResponse<InventoryDtos.StockEntryResponse> listEntries(Integer page, Integer size) {
+        Page<StockEntry> rows = stockEntryRepository.findAllBy(
+                PageRequests.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        return PageResponse.from(rows.map(this::toResponse));
     }
 
     private StockItem resolveOrCreateItem(InventoryDtos.AddStockRequest request) {

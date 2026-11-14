@@ -10,10 +10,14 @@ import com.jewellery.erp.inventory.repository.StockMovementRepository;
 import com.jewellery.erp.masterdata.domain.Purity;
 import com.jewellery.erp.masterdata.repository.PurityRepository;
 import com.jewellery.erp.organization.repository.BranchRepository;
+import com.jewellery.erp.shared.api.PageRequests;
+import com.jewellery.erp.shared.api.PageResponse;
 import com.jewellery.erp.shared.domain.BusinessException;
 import com.jewellery.erp.shared.domain.MoneyMath;
 import com.jewellery.erp.shared.domain.NotFoundException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,8 +76,11 @@ public class StockService {
     }
 
     @Transactional(readOnly = true)
-    public List<InventoryDtos.StockItemResponse> listItems() {
-        return stockItemRepository.findAll().stream().map(this::toItem).toList();
+    public PageResponse<InventoryDtos.StockItemResponse> listItems(Integer page, Integer size) {
+        Page<StockItem> rows = stockItemRepository.findAll(
+                PageRequests.of(page, size, Sort.by(Sort.Direction.ASC, "sku"))
+        );
+        return PageResponse.from(rows.map(this::toItem));
     }
 
     /** Search by sku / barcode / rfid / name (exact matches ranked first), with available stock totals. */
