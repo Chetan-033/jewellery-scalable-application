@@ -238,7 +238,9 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
         merged.countryName = merged.countryName || 'India';
         merged.relationType = merged.relationType || 'S/o';
         merged.partyType = data.partyType || merged.partyType || 'Customer';
-
+        // Never hydrate passwords from API (backend omits them; blank = leave unchanged on save)
+        merged.portalPassword = '';
+        merged.masterPassword = '';
         this.form = merged;
         this.parseDates(data);
       },

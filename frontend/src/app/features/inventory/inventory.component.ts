@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ApiPage, pageContent } from '../../core/api-page';
 
 interface Metal { id: string; code: string; name: string; }
 interface Purity { id: string; metalId: string; label: string; fineness: number; }
@@ -99,8 +100,12 @@ export class InventoryComponent implements OnInit {
   reload(): void {
     this.http.get<Metal[]>(`${environment.apiBaseUrl}/masters/metals`).subscribe({ next: (r) => this.metals.set(r) });
     this.http.get<Purity[]>(`${environment.apiBaseUrl}/masters/purities`).subscribe({ next: (r) => this.purities.set(r) });
-    this.http.get<StockItem[]>(`${environment.apiBaseUrl}/inventory/items`).subscribe({ next: (r) => this.items.set(r) });
-    this.http.get<StockEntry[]>(`${environment.apiBaseUrl}/inventory/add-stock`).subscribe({ next: (r) => this.entries.set(r) });
+    this.http.get<ApiPage<StockItem>>(`${environment.apiBaseUrl}/inventory/items`, {
+      params: { page: 0, size: 100 }
+    }).subscribe({ next: (r) => this.items.set(pageContent(r)), error: () => this.items.set([]) });
+    this.http.get<ApiPage<StockEntry>>(`${environment.apiBaseUrl}/inventory/add-stock`, {
+      params: { page: 0, size: 50 }
+    }).subscribe({ next: (r) => this.entries.set(pageContent(r)), error: () => this.entries.set([]) });
     this.http.get<StockSettings>(`${environment.apiBaseUrl}/calc/settings/stock-add`).subscribe({ next: (r) => this.settings.set(r) });
     this.http.get<Summary>(`${environment.apiBaseUrl}/inventory/summary`).subscribe({
       next: (r) => this.summary.set(r),

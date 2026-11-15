@@ -4,6 +4,7 @@ import com.jewellery.erp.calculation.StockAddResult;
 import com.jewellery.erp.inventory.application.AddStockService;
 import com.jewellery.erp.inventory.application.StockService;
 import com.jewellery.erp.inventory.application.StockSummaryService;
+import com.jewellery.erp.shared.api.PageResponse;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,8 +49,10 @@ public class InventoryController {
     }
 
     @GetMapping("/items")
-    public List<InventoryDtos.StockItemResponse> items() {
-        return stockService.listItems();
+    public PageResponse<InventoryDtos.StockItemResponse> items(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return stockService.listItems(page, size);
     }
 
     @PostMapping("/movements")
@@ -81,7 +84,9 @@ public class InventoryController {
     }
 
     @GetMapping("/add-stock")
-    public List<InventoryDtos.StockEntryResponse> listAddStock() {
-        return addStockService.listEntries();
+    public PageResponse<InventoryDtos.StockEntryResponse> listAddStock(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return addStockService.listEntries(page, size);
     }
 }

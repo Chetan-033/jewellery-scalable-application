@@ -11,11 +11,16 @@ import com.jewellery.erp.loans.repository.GirviLoanRepository;
 import com.jewellery.erp.masterdata.repository.CustomerRepository;
 import com.jewellery.erp.organization.application.DocumentNumberService;
 import com.jewellery.erp.organization.repository.BranchRepository;
+import com.jewellery.erp.masterdata.domain.Customer;
+import com.jewellery.erp.shared.api.PageRequests;
+import com.jewellery.erp.shared.api.PageResponse;
 import com.jewellery.erp.shared.domain.BusinessException;
 import com.jewellery.erp.shared.domain.MoneyMath;
 import com.jewellery.erp.shared.domain.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +31,13 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class LoanService {
@@ -171,11 +181,23 @@ public class LoanService {
     }
 
     @Transactional(readOnly = true)
-    public List<LoanDtos.LoanResponse> listActive(String status) {
-        List<GirviLoan> rows = (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status.trim()))
-                ? repository.findAllByOrderByOpenDateDescCreatedAtDesc()
-                : repository.findByStatusOrderByOpenDateDescCreatedAtDesc(status.trim().toUpperCase());
-        return rows.stream().map(this::toDto).toList();
+    public PageResponse<LoanDtos.LoanResponse> listActive(String status, Integer page, Integer size, boolean includeItems) {
+        var pageable = PageRequests.of(
+                page,
+                size,
+                Sort.by(Sort.Order.desc("openDate"), Sort.Order.desc("createdAt"))
+        );
+        Page<GirviLoan> rows = (status == null || status.isBlank() || "ALL".equalsIgnoreCase(status.trim()))
+                ? repository.findAllBy(pageable)
+                : repository.findByStatus(status.trim().toUpperCase(), pageable);
+
+        Map<String, Customer> customers = loadCustomers(rows.getContent());
+        List<LoanDtos.LoanResponse> content = rows.getContent().stream()
+                .map(loan -> includeItems
+                        ? toDto(loan, customers.get(loan.getCustomerId()))
+                        : toSummaryDto(loan, customers.get(loan.getCustomerId())))
+                .toList();
+        return PageResponse.of(content, rows.getNumber(), rows.getSize(), rows.getTotalElements());
     }
 
     @Transactional(readOnly = true)
@@ -381,18 +403,25 @@ public class LoanService {
         return toDto(loan);
     }
 
-    /** interest = principal * roi% * days / 30 for MONTHLY (YEARLY: /365, DAILY: per day). */
+    /**
+     * Single interest entry-point for list/detail display.
+     * MONTHLY uses the same Omunim DD engine as settlement preview (keeps UI and release aligned).
+     * YEARLY / DAILY keep day-count formulas.
+     */
     static BigDecimal computeInterest(GirviLoan loan, LocalDate asOf) {
-        long days = Math.max(0, ChronoUnit.DAYS.between(loan.getOpenDate(), asOf));
-        BigDecimal base = loan.getPrincipalAmount()
-                .multiply(loan.getRoiPercent())
+        String type = loan.getInterestType() == null ? "MONTHLY" : loan.getInterestType().trim().toUpperCase();
+        if ("MONTHLY".equals(type) || type.isBlank()) {
+            return computeInterestWithOptions(loan, asOf, "DD");
+        }
+
+        long days = Math.max(0, ChronoUnit.DAYS.between(loan.getOpenDate(), asOf == null ? LocalDate.now() : asOf));
+        BigDecimal principal = loan.getPrincipalAmount() != null ? loan.getPrincipalAmount() : BigDecimal.ZERO;
+        BigDecimal roi = loan.getRoiPercent() != null ? loan.getRoiPercent() : BigDecimal.ZERO;
+        BigDecimal base = principal
+                .multiply(roi)
                 .divide(BigDecimal.valueOf(100), 8, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(days));
-        BigDecimal divisor = switch (loan.getInterestType() == null ? "MONTHLY" : loan.getInterestType()) {
-            case "YEARLY" -> BigDecimal.valueOf(365);
-            case "DAILY" -> BigDecimal.ONE;
-            default -> BigDecimal.valueOf(30);
-        };
+        BigDecimal divisor = "YEARLY".equals(type) ? BigDecimal.valueOf(365) : BigDecimal.ONE;
         return MoneyMath.money(base.divide(divisor, 8, RoundingMode.HALF_UP));
     }
 
@@ -403,18 +432,15 @@ public class LoanService {
     }
 
     private LoanDtos.LoanResponse toDto(GirviLoan loan) {
-        LocalDate asOf = GirviLoan.ACTIVE.equals(loan.getStatus())
-                ? LocalDate.now()
-                : loan.getUpdatedAt().atZone(ZoneId.systemDefault()).toLocalDate();
-        BigDecimal interest = loan.getInterestAmount();
-        BigDecimal total = loan.getTotalAmount();
-        if (GirviLoan.ACTIVE.equals(loan.getStatus())) {
-            interest = computeInterest(loan, asOf);
-            total = MoneyMath.money(loan.getPrincipalAmount().add(interest));
-        }
-        long days = Math.max(0, ChronoUnit.DAYS.between(loan.getOpenDate(), asOf));
+        Customer customer = customerRepository.findById(loan.getCustomerId()).orElse(null);
+        return toDto(loan, customer);
+    }
 
-        // Load items
+    private LoanDtos.LoanResponse toSummaryDto(GirviLoan loan, Customer customer) {
+        return toDto(loan, customer, List.of());
+    }
+
+    private LoanDtos.LoanResponse toDto(GirviLoan loan, Customer customer) {
         List<GirviLoanItem> itemEntities = itemRepository.findByGirviLoanIdOrderByLineNoAsc(loan.getId());
         List<LoanDtos.PledgedItemDto> itemDtos = new ArrayList<>();
         for (GirviLoanItem item : itemEntities) {
@@ -432,20 +458,26 @@ public class LoanService {
                     item.getPhotoUrl()
             ));
         }
+        return toDto(loan, customer, itemDtos);
+    }
 
-        // Customer details
-        String customerName = "Customer";
-        String customerCode = "";
-        String customerPhone = "";
-        String customerCity = "";
-        var custOpt = customerRepository.findById(loan.getCustomerId());
-        if (custOpt.isPresent()) {
-            var c = custOpt.get();
-            customerName = c.getName();
-            customerCode = c.getCode();
-            customerPhone = c.getPhone() == null ? "" : c.getPhone();
-            customerCity = c.getCity() == null ? "" : c.getCity();
+    private LoanDtos.LoanResponse toDto(GirviLoan loan, Customer customer, List<LoanDtos.PledgedItemDto> itemDtos) {
+        LocalDate asOf = GirviLoan.ACTIVE.equals(loan.getStatus())
+                ? LocalDate.now()
+                : loan.getUpdatedAt().atZone(ZoneId.systemDefault()).toLocalDate();
+        BigDecimal interest = loan.getInterestAmount();
+        BigDecimal total = loan.getTotalAmount();
+        if (GirviLoan.ACTIVE.equals(loan.getStatus())) {
+            // Same engine as settlement default (DD) for MONTHLY loans
+            interest = computeInterest(loan, asOf);
+            total = MoneyMath.money(loan.getPrincipalAmount().add(interest));
         }
+        long days = Math.max(0, ChronoUnit.DAYS.between(loan.getOpenDate(), asOf));
+
+        String customerName = customer != null && customer.getName() != null ? customer.getName() : "Customer";
+        String customerCode = customer != null && customer.getCode() != null ? customer.getCode() : "";
+        String customerPhone = customer != null && customer.getPhone() != null ? customer.getPhone() : "";
+        String customerCity = customer != null && customer.getCity() != null ? customer.getCity() : "";
 
         return new LoanDtos.LoanResponse(
                 loan.getId(), loan.getBranchId(), loan.getCustomerId(),
@@ -473,6 +505,19 @@ public class LoanService {
                 loan.getReleaseRemarks(),
                 loan.getLockerStatus() != null ? loan.getLockerStatus() : "LOCKED"
         );
+    }
+
+    private Map<String, Customer> loadCustomers(List<GirviLoan> loans) {
+        Set<String> ids = loans.stream()
+                .map(GirviLoan::getCustomerId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, Customer> map = new HashMap<>();
+        customerRepository.findAllById(ids).forEach(c -> map.put(c.getId(), c));
+        return map;
     }
 
     private BigDecimal nz(BigDecimal value) {

@@ -16,9 +16,13 @@ import com.jewellery.erp.sales.domain.SalesInvoice;
 import com.jewellery.erp.sales.domain.SalesInvoiceLine;
 import com.jewellery.erp.sales.repository.SaleExchangeLineRepository;
 import com.jewellery.erp.sales.repository.SalesInvoiceRepository;
+import com.jewellery.erp.shared.api.PageRequests;
+import com.jewellery.erp.shared.api.PageResponse;
 import com.jewellery.erp.shared.domain.BusinessException;
 import com.jewellery.erp.shared.domain.MoneyMath;
 import com.jewellery.erp.shared.domain.NotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -220,13 +224,16 @@ public class SalesService {
     }
 
     @Transactional(readOnly = true)
-    public List<SalesDtos.SaleResponse> list() {
-        List<SalesInvoice> invoices = salesInvoiceRepository.findAllByOrderByCreatedAtDesc();
+    public PageResponse<SalesDtos.SaleResponse> list(Integer page, Integer size) {
+        Page<SalesInvoice> invoices = salesInvoiceRepository.findAllBy(
+                PageRequests.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
         Map<String, List<SalesDtos.ExchangeLineResponse>> exchanges = loadExchangeLines(
-                invoices.stream().map(SalesInvoice::getId).toList());
-        return invoices.stream()
+                invoices.getContent().stream().map(SalesInvoice::getId).toList());
+        List<SalesDtos.SaleResponse> content = invoices.getContent().stream()
                 .map(i -> toDto(i, exchanges.getOrDefault(i.getId(), List.of())))
                 .toList();
+        return PageResponse.of(content, invoices.getNumber(), invoices.getSize(), invoices.getTotalElements());
     }
 
     /** Split payments; legacy paidAmount-only requests are treated as cash. paidAmount = cash+card+online+cheque. */

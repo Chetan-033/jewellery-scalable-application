@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { ApiPage, pageContent } from '../../core/api-page';
 
 interface Customer {
   id: string; code: string; name: string; phone?: string; city?: string;
@@ -141,18 +142,26 @@ export class SalesComponent implements OnInit {
   }
 
   reloadInvoices(): void {
-    this.http.get<any[]>(`${environment.apiBaseUrl}/sales/invoices`).subscribe({ next: (rows) => this.invoices.set(rows) });
+    this.http.get<ApiPage<any>>(`${environment.apiBaseUrl}/sales/invoices`, {
+      params: { page: 0, size: 50 }
+    }).subscribe({
+      next: (page) => this.invoices.set(pageContent(page)),
+      error: () => this.invoices.set([])
+    });
   }
 
   searchCustomers(): void {
     const q = this.customerQuery?.trim() || '';
-    this.http.get<Customer[]>(`${environment.apiBaseUrl}/masters/customers`, { params: q ? { q } : {} }).subscribe({
-      next: (rows) => {
-        this.customers.set(rows);
+    const params: Record<string, string | number> = { page: 0, size: 50 };
+    if (q) params['q'] = q;
+    this.http.get<ApiPage<Customer>>(`${environment.apiBaseUrl}/masters/customers`, { params }).subscribe({
+      next: (page) => {
+        this.customers.set(pageContent(page));
         if (this.customerId) {
           this.pickCustomer();
         }
-      }
+      },
+      error: () => this.customers.set([])
     });
   }
 
