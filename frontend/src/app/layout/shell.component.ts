@@ -19,6 +19,7 @@ interface NavItem {
   label: string;
   icon: string;
   exact?: boolean;
+  hasDropdown?: boolean;
 }
 
 interface NavGroup {
@@ -40,6 +41,8 @@ export class ShellComponent implements OnInit, OnDestroy {
   readonly clock = signal(new Date());
   readonly sidebarCollapsed = signal(false);
   readonly mobileNavOpen = signal(false);
+  readonly userFlyoutOpen = signal(false);
+  readonly userFlyoutTop = signal<number>(200);
   globalQuery = '';
   private timer?: ReturnType<typeof setInterval>;
 
@@ -73,8 +76,7 @@ export class ShellComponent implements OnInit, OnDestroy {
     {
       title: 'Setup',
       items: [
-        { path: '/app/masters', label: 'Masters / Users', icon: '👤' },
-        { path: '/app/manufacturing', label: 'Karigar', icon: '⚙' },
+        { path: '/app/masters', label: 'User List', icon: '👤', hasDropdown: true },
         { path: '/app/admin', label: 'Settings', icon: '⋯' }
       ]
     }
@@ -116,6 +118,33 @@ export class ShellComponent implements OnInit, OnDestroy {
 
   closeMobileNav(): void {
     this.mobileNavOpen.set(false);
+    this.closeUserFlyout();
+  }
+
+  toggleUserFlyout(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const target = (event.currentTarget as HTMLElement).closest('.nav-item-container');
+    if (target) {
+      const rect = target.getBoundingClientRect();
+      const flyoutH = 340;
+      let top = rect.top - 40;
+      if (top + flyoutH > window.innerHeight) {
+        top = Math.max(15, window.innerHeight - flyoutH - 20);
+      }
+      this.userFlyoutTop.set(Math.max(15, top));
+    }
+    this.userFlyoutOpen.update((v) => !v);
+  }
+
+  closeUserFlyout(): void {
+    this.userFlyoutOpen.set(false);
+  }
+
+  navigateAndClose(path: string, queryParams?: Record<string, string>): void {
+    this.closeUserFlyout();
+    this.closeMobileNav();
+    void this.router.navigate([path], { queryParams });
   }
 
   reloadRates(): void {

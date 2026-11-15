@@ -22,6 +22,7 @@ public final class MasterDataDtos {
             @Size(max = 20) String gstin,
             @Size(max = 100) String city,
             @Size(max = 500) String address,
+            @Size(max = 32) String partyType,
             @Size(max = 16) String title,
             @Size(max = 8) String gender,
             @Size(max = 100) String spouseName,
@@ -86,6 +87,7 @@ public final class MasterDataDtos {
             String city,
             String address,
             String status,
+            String partyType,
             String title,
             String gender,
             String spouseName,
@@ -133,7 +135,8 @@ public final class MasterDataDtos {
             String aadhaarFrontDesc,
             String aadhaarBackBase64,
             String aadhaarBackDesc,
-            Boolean sendWelcomeSms
+            Boolean sendWelcomeSms,
+            String createdAt
     ) {
     }
 

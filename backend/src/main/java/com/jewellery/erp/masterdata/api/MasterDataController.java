@@ -2,6 +2,7 @@ package com.jewellery.erp.masterdata.api;
 
 import com.jewellery.erp.masterdata.application.MasterDataService;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +39,11 @@ public class MasterDataController {
             @PathVariable String id,
             @Valid @RequestBody MasterDataDtos.CustomerRequest request) {
         return masterDataService.updateCustomer(id, request);
+    }
+
+    @DeleteMapping("/customers/{id}")
+    public void deleteCustomer(@PathVariable String id) {
+        masterDataService.deleteCustomer(id);
     }
 
     @GetMapping("/customers")

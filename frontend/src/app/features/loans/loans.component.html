@@ -1,90 +1,126 @@
 <div class="loans-management-page">
 
-  <!-- 1. TOP GIRVI CATEGORY & REPORT TABS (Matches Image 1 Navigation Bar) -->
-  <nav class="girvi-top-nav">
-    <button
-      type="button"
-      class="nav-tab-btn"
-      [class.active]="activeTab() === 'ACTIVE'"
-      (click)="setTab('ACTIVE')"
-    >
-      ACTIVE LOANS
-      <span class="tab-indicator-count">{{ activeLoansCount }}</span>
-    </button>
+  <!-- 1. Modern Full-Width Navigation Tab Bar (Loans / Girvi Management) -->
+  <div class="modern-tab-bar-card">
+    <nav class="girvi-top-nav">
+      <button
+        type="button"
+        class="nav-tab-btn"
+        [class.active]="activeTab() === 'ACTIVE'"
+        (click)="setTab('ACTIVE')"
+        title="View Active Ongoing Loans"
+      >
+        <span class="tab-icon">🏷️</span>
+        <span class="tab-title">ACTIVE LOANS</span>
+        <span class="tab-indicator-count">{{ activeLoansCount }}</span>
+      </button>
 
-    <button
-      type="button"
-      class="nav-tab-btn"
-      [class.active]="activeTab() === 'RELEASED'"
-      (click)="setTab('RELEASED')"
-    >
-      RELEASED LOANS
-      <span class="tab-indicator-count">{{ releasedLoansCount }}</span>
-    </button>
+      <button
+        type="button"
+        class="nav-tab-btn"
+        [class.active]="activeTab() === 'RELEASED'"
+        (click)="setTab('RELEASED')"
+        title="View Settled & Released Loans"
+      >
+        <span class="tab-icon">🔓</span>
+        <span class="tab-title">RELEASED LOANS</span>
+        <span class="tab-indicator-count">{{ releasedLoansCount }}</span>
+      </button>
 
-    <button
-      type="button"
-      class="nav-tab-btn"
-      [class.active]="activeTab() === 'AUCTIONED'"
-      (click)="setTab('AUCTIONED')"
-    >
-      AUCTIONED LOANS
-    </button>
+      <button
+        type="button"
+        class="nav-tab-btn"
+        [class.active]="activeTab() === 'AUCTIONED'"
+        (click)="setTab('AUCTIONED')"
+        title="View Auctioned & Under-Notice Loans"
+      >
+        <span class="tab-icon">🔨</span>
+        <span class="tab-title">AUCTIONED LOANS</span>
+        @if (auctionedLoansCount > 0) {
+          <span class="tab-indicator-count">{{ auctionedLoansCount }}</span>
+        }
+      </button>
 
-    <button
-      type="button"
-      class="nav-tab-btn"
-      [class.active]="activeTab() === 'LOSS'"
-      (click)="setTab('LOSS')"
-    >
-      LOANS IN LOSS
-    </button>
+      <button
+        type="button"
+        class="nav-tab-btn"
+        [class.active]="activeTab() === 'LOSS'"
+        (click)="setTab('LOSS')"
+        title="View Overdue & High-Risk Loans"
+      >
+        <span class="tab-icon">⚠️</span>
+        <span class="tab-title">LOANS IN LOSS</span>
+        @if (lossLoansCount > 0) {
+          <span class="tab-indicator-count alert-count">{{ lossLoansCount }}</span>
+        }
+      </button>
 
-    <button
-      type="button"
-      class="nav-tab-btn"
-      [class.active]="activeTab() === 'TRANSFERRED'"
-      (click)="setTab('TRANSFERRED')"
-    >
-      TRANSFERED LOANS
-    </button>
+      <button
+        type="button"
+        class="nav-tab-btn"
+        [class.active]="activeTab() === 'TRANSFERRED'"
+        (click)="setTab('TRANSFERRED')"
+        title="View Transferred Loans & Vault Movements"
+      >
+        <span class="tab-icon">🔄</span>
+        <span class="tab-title">TRANSFERED LOANS</span>
+        @if (transferredLoansCount > 0) {
+          <span class="tab-indicator-count">{{ transferredLoansCount }}</span>
+        }
+      </button>
 
-    <button
-      type="button"
-      class="nav-tab-btn"
-      [class.active]="activeTab() === 'TALLY'"
-      (click)="setTab('TALLY')"
-    >
-      TALLY LOANS
-    </button>
+      <button
+        type="button"
+        class="nav-tab-btn"
+        [class.active]="activeTab() === 'TALLY'"
+        (click)="setTab('TALLY')"
+        title="View Tally & Accounting Audit"
+      >
+        <span class="tab-icon">📊</span>
+        <span class="tab-title">TALLY LOANS</span>
+      </button>
 
-    <button
-      type="button"
-      class="nav-tab-btn"
-      [class.active]="activeTab() === 'EMI'"
-      (click)="setTab('EMI')"
-    >
-      FINANCE EMI
-    </button>
+      <button
+        type="button"
+        class="nav-tab-btn"
+        [class.active]="activeTab() === 'EMI'"
+        (click)="setTab('EMI')"
+        title="View Finance EMI & Monthly Interest Loans"
+      >
+        <span class="tab-icon">💳</span>
+        <span class="tab-title">FINANCE EMI</span>
+        @if (emiLoansCount > 0) {
+          <span class="tab-indicator-count">{{ emiLoansCount }}</span>
+        }
+      </button>
 
-    <button
-      type="button"
-      class="nav-tab-btn"
-      [class.active]="activeTab() === 'SHOPKEEPER'"
-      (click)="setTab('SHOPKEEPER')"
-    >
-      SHOPKEEPERS LOAN
-    </button>
+      <button
+        type="button"
+        class="nav-tab-btn"
+        [class.active]="activeTab() === 'SHOPKEEPER'"
+        (click)="setTab('SHOPKEEPER')"
+        title="View Shopkeeper & Karigar Advances"
+      >
+        <span class="tab-icon">🏪</span>
+        <span class="tab-title">SHOPKEEPERS LOAN</span>
+        @if (shopkeeperLoansCount > 0) {
+          <span class="tab-indicator-count">{{ shopkeeperLoansCount }}</span>
+        }
+      </button>
 
-    <button
-      type="button"
-      class="nav-tab-btn"
-      [class.active]="activeTab() === 'SETUP'"
-      (click)="setTab('SETUP')"
-    >
-      SETUP ▾
-    </button>
-  </nav>
+      <button
+        type="button"
+        class="nav-tab-btn"
+        [class.active]="activeTab() === 'SETUP'"
+        (click)="setTab('SETUP')"
+        title="Girvi System Configuration & Setup"
+      >
+        <span class="tab-icon">⚙️</span>
+        <span class="tab-title">SETUP</span>
+        <span class="tab-caret">▾</span>
+      </button>
+    </nav>
+  </div>
 
   <!-- Notification Banner -->
   @if (message()) {

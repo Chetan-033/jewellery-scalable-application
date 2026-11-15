@@ -435,6 +435,26 @@ export class LoansComponent implements OnInit {
     return this.allLoans().filter(l => l.status === 'RELEASED').length;
   }
 
+  get auctionedLoansCount(): number {
+    return this.allLoans().filter(l => l.status === 'AUCTIONED').length;
+  }
+
+  get lossLoansCount(): number {
+    return this.allLoans().filter(l => l.status === 'LOSS' || (l.status === 'ACTIVE' && l.daysElapsed > 365)).length;
+  }
+
+  get transferredLoansCount(): number {
+    return this.allLoans().filter(l => l.status === 'TRANSFERRED' || (l.itemLocation && l.itemLocation.toLowerCase().includes('transfer'))).length;
+  }
+
+  get emiLoansCount(): number {
+    return this.allLoans().filter(l => l.loanType === 'EMI' || l.interestType === 'MONTHLY').length;
+  }
+
+  get shopkeeperLoansCount(): number {
+    return this.allLoans().filter(l => l.loanType === 'UNSECURED' || (l.remarks && l.remarks.toLowerCase().includes('shop'))).length;
+  }
+
   changePage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;

@@ -224,15 +224,22 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
   private loadCustomer(id: string): void {
     this.http.get<any>(`${environment.apiBaseUrl}/masters/customers/${id}`).subscribe({
       next: (data) => {
-        this.form = {
-          ...this.emptyForm(),
-          ...data,
-          gender: data.gender || 'F',
-          title: data.title || 'Ms.',
-          hos: data.hos || 'HOS',
-          accountGroup: data.accountGroup || 'Sundry Debtors',
-          countryName: data.countryName || 'India'
-        };
+        const empty = this.emptyForm();
+        const merged: any = { ...empty };
+        for (const k of Object.keys(empty)) {
+          if (data[k] !== undefined && data[k] !== null) {
+            merged[k] = data[k];
+          }
+        }
+        merged.gender = merged.gender || 'F';
+        merged.title = merged.title || 'Ms.';
+        merged.hos = merged.hos || 'HOS';
+        merged.accountGroup = merged.accountGroup || 'Sundry Debtors';
+        merged.countryName = merged.countryName || 'India';
+        merged.relationType = merged.relationType || 'S/o';
+        merged.partyType = data.partyType || merged.partyType || 'Customer';
+
+        this.form = merged;
         this.parseDates(data);
       },
       error: () => {
@@ -392,20 +399,30 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
   saveCustomer(): void {
     if (this.isSaving()) return;
 
+    const str = (v: any): string => (typeof v === 'string' ? v.trim() : (v != null ? String(v).trim() : ''));
+    const strOrUndef = (v: any): string | undefined => {
+      const s = str(v);
+      return s ? s : undefined;
+    };
+    const upperOrUndef = (v: any): string | undefined => {
+      const s = str(v);
+      return s ? s.toUpperCase() : undefined;
+    };
+
     const rules = this.validationConfig.getRules('full');
     const result = validateCustomer(
       {
-        firstName: this.form.firstName,
-        lastName: this.form.lastName,
-        businessName: this.form.businessName,
-        phone: this.form.phone,
-        email: this.form.email,
-        pincode: this.form.pincode,
-        panNo: this.form.panNo,
-        gstin: this.form.gstin,
-        aadhaarNo: this.form.aadhaarNo,
-        bankIfscCode: this.form.bankIfscCode,
-        bankAccNo: this.form.bankAccNo
+        firstName: str(this.form.firstName),
+        lastName: str(this.form.lastName),
+        businessName: str(this.form.businessName),
+        phone: str(this.form.phone),
+        email: str(this.form.email),
+        pincode: str(this.form.pincode),
+        panNo: str(this.form.panNo),
+        gstin: str(this.form.gstin),
+        aadhaarNo: str(this.form.aadhaarNo),
+        bankIfscCode: str(this.form.bankIfscCode),
+        bankAccNo: str(this.form.bankAccNo)
       },
       rules,
       'full'
@@ -417,85 +434,93 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
       return;
     }
 
+    const first = str(this.form.firstName);
+    const last = str(this.form.lastName);
+    const biz = str(this.form.businessName);
+    if (!first && !last && !biz) {
+      this.message.set({ text: 'Please provide at least a First Name or Business Name.', type: 'error' });
+      return;
+    }
+
     this.fieldErrors.set({});
     this.isSaving.set(true);
     const dates = this.formatDates();
     const normalized = normalizeCustomerForSave({
-      firstName: this.form.firstName,
-      lastName: this.form.lastName,
-      businessName: this.form.businessName,
-      phone: this.form.phone,
-      email: this.form.email,
-      pincode: this.form.pincode,
-      panNo: this.form.panNo,
-      gstin: this.form.gstin,
-      aadhaarNo: this.form.aadhaarNo,
-      bankIfscCode: this.form.bankIfscCode,
-      bankAccNo: this.form.bankAccNo
+      firstName: str(this.form.firstName),
+      lastName: str(this.form.lastName),
+      businessName: str(this.form.businessName),
+      phone: str(this.form.phone),
+      email: str(this.form.email),
+      pincode: str(this.form.pincode),
+      panNo: str(this.form.panNo),
+      gstin: str(this.form.gstin),
+      aadhaarNo: str(this.form.aadhaarNo),
+      bankIfscCode: str(this.form.bankIfscCode),
+      bankAccNo: str(this.form.bankAccNo)
     });
 
-    const fullName = [normalized.firstName, this.form.lastName.trim()].filter(Boolean).join(' ').trim()
+    const fullName = [normalized.firstName || first, last].filter(Boolean).join(' ').trim()
       || normalized.businessName
-      || this.form.businessName.trim();
+      || biz;
 
     const payload: any = {
-      code: this.form.code.trim() || undefined,
+      code: strOrUndef(this.form.code),
       name: fullName,
-      firstName: normalized.firstName || undefined,
-      lastName: this.form.lastName.trim() || undefined,
-      partyType: this.form.partyType,
-      title: this.form.title,
-      gender: this.form.gender,
-      relationType: this.form.relationType,
-      fatherName: this.form.fatherName.trim() || undefined,
-      motherName: this.form.motherName.trim() || undefined,
-      spouseName: this.form.spouseName.trim() || undefined,
-      caste: this.form.caste.trim() || undefined,
-      qualification: this.form.qualification.trim() || undefined,
-      maritalStatus: this.form.maritalStatus || undefined,
+      firstName: normalized.firstName || strOrUndef(this.form.firstName),
+      lastName: strOrUndef(this.form.lastName),
+      partyType: this.form.partyType || 'Customer',
+      title: this.form.title || 'Ms.',
+      gender: this.form.gender || 'F',
+      relationType: this.form.relationType || 'S/o',
+      fatherName: strOrUndef(this.form.fatherName),
+      motherName: strOrUndef(this.form.motherName),
+      spouseName: strOrUndef(this.form.spouseName),
+      caste: strOrUndef(this.form.caste),
+      qualification: strOrUndef(this.form.qualification),
+      maritalStatus: strOrUndef(this.form.maritalStatus),
       dob: dates.dob || undefined,
       spouseDob: dates.spouseDob || undefined,
       anniversaryDate: dates.anniversaryDate || undefined,
-      hos: this.form.hos,
-      accountGroup: this.form.accountGroup,
-      panNo: normalized.panNo || undefined,
-      gstin: normalized.gstin || undefined,
-      taxNo: this.form.taxNo.trim() || undefined,
-      aadhaarNo: normalized.aadhaarNo || undefined,
-      bankName: this.form.bankName.trim() || undefined,
-      bankAccName: this.form.bankAccName.trim() || undefined,
-      bankAccNo: normalized.bankAccNo || undefined,
-      bankIfscCode: normalized.bankIfscCode || undefined,
-      occupation: this.form.occupation.trim() || undefined,
-      annualIncome: this.form.annualIncome.trim() || undefined,
-      nomineeName: this.form.nomineeName.trim() || undefined,
-      nomineeRelation: this.form.nomineeRelation.trim() || undefined,
-      designation: this.form.designation.trim() || undefined,
-      loginId: this.form.loginId.trim() || undefined,
-      portalPassword: this.form.portalPassword.trim() || undefined,
-      masterPassword: this.form.masterPassword.trim() || undefined,
-      businessName: normalized.businessName || this.form.businessName.trim() || undefined,
-      officeAddress: this.form.officeAddress.trim() || undefined,
-      permanentAddress: this.form.permanentAddress.trim() || undefined,
-      currentAddress: this.form.currentAddress.trim() || undefined,
-      shippingAddress: this.form.shippingAddress.trim() || undefined,
-      village: this.form.village.trim() || undefined,
-      wardNumber: this.form.wardNumber.trim() || undefined,
-      tehsil: this.form.tehsil.trim() || undefined,
-      city: this.form.city.trim() || undefined,
-      countryName: this.form.countryName.trim() || 'India',
-      pincode: normalized.pincode || undefined,
-      stateName: this.form.stateName.trim() || undefined,
-      otherInfo: this.form.otherInfo.trim() || undefined,
-      phone: normalized.phone || undefined,
-      email: normalized.email || undefined,
-      address: this.form.currentAddress.trim() || this.form.officeAddress.trim() || undefined,
+      hos: this.form.hos || 'HOS',
+      accountGroup: this.form.accountGroup || 'Sundry Debtors',
+      panNo: normalized.panNo || upperOrUndef(this.form.panNo),
+      gstin: normalized.gstin || upperOrUndef(this.form.gstin),
+      taxNo: strOrUndef(this.form.taxNo),
+      aadhaarNo: normalized.aadhaarNo || strOrUndef(this.form.aadhaarNo),
+      bankName: strOrUndef(this.form.bankName),
+      bankAccName: strOrUndef(this.form.bankAccName),
+      bankAccNo: normalized.bankAccNo || strOrUndef(this.form.bankAccNo),
+      bankIfscCode: normalized.bankIfscCode || upperOrUndef(this.form.bankIfscCode),
+      occupation: strOrUndef(this.form.occupation),
+      annualIncome: strOrUndef(this.form.annualIncome),
+      nomineeName: strOrUndef(this.form.nomineeName),
+      nomineeRelation: strOrUndef(this.form.nomineeRelation),
+      designation: strOrUndef(this.form.designation),
+      loginId: strOrUndef(this.form.loginId),
+      portalPassword: strOrUndef(this.form.portalPassword),
+      masterPassword: strOrUndef(this.form.masterPassword),
+      businessName: normalized.businessName || strOrUndef(this.form.businessName),
+      officeAddress: strOrUndef(this.form.officeAddress),
+      permanentAddress: strOrUndef(this.form.permanentAddress),
+      currentAddress: strOrUndef(this.form.currentAddress),
+      shippingAddress: strOrUndef(this.form.shippingAddress),
+      village: strOrUndef(this.form.village),
+      wardNumber: strOrUndef(this.form.wardNumber),
+      tehsil: strOrUndef(this.form.tehsil),
+      city: strOrUndef(this.form.city),
+      countryName: strOrUndef(this.form.countryName) || 'India',
+      pincode: normalized.pincode || strOrUndef(this.form.pincode),
+      stateName: strOrUndef(this.form.stateName),
+      otherInfo: strOrUndef(this.form.otherInfo),
+      phone: normalized.phone || strOrUndef(this.form.phone),
+      email: normalized.email || strOrUndef(this.form.email),
+      address: strOrUndef(this.form.currentAddress) || strOrUndef(this.form.officeAddress) || undefined,
       photoBase64: this.form.photoBase64 || undefined,
       aadhaarFrontBase64: this.form.aadhaarFrontBase64 || undefined,
-      aadhaarFrontDesc: this.form.aadhaarFrontDesc.trim() || undefined,
+      aadhaarFrontDesc: strOrUndef(this.form.aadhaarFrontDesc),
       aadhaarBackBase64: this.form.aadhaarBackBase64 || undefined,
-      aadhaarBackDesc: this.form.aadhaarBackDesc.trim() || undefined,
-      sendWelcomeSms: this.form.sendWelcomeSms
+      aadhaarBackDesc: strOrUndef(this.form.aadhaarBackDesc),
+      sendWelcomeSms: !!this.form.sendWelcomeSms
     };
 
     const req$ = this.isEdit() && this.customerId()
@@ -510,12 +535,16 @@ export class CustomerFormComponent implements OnInit, OnDestroy {
           type: 'success'
         });
         setTimeout(() => {
-          this.router.navigate(['/app/masters'], { queryParams: { tab: 'customers' } });
-        }, 1500);
+          this.router.navigate(['/app/masters'], { queryParams: { tab: 'customer' } });
+        }, 1200);
       },
-      error: (err) => {
+      error: (err: any) => {
         this.isSaving.set(false);
-        const errMsg = err?.error?.message || 'Failed to save customer. Please check required fields.';
+        let errMsg = err?.error?.message || 'Failed to save customer. Please check required fields.';
+        if (err?.error?.fieldErrors && err.error.fieldErrors.length > 0) {
+          const details = err.error.fieldErrors.map((f: any) => `${f.field}: ${f.message}`).join(', ');
+          errMsg += ` (${details})`;
+        }
         this.message.set({ text: errMsg, type: 'error' });
       }
     });
