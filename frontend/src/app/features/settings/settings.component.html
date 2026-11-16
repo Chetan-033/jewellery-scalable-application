@@ -1,0 +1,1073 @@
+<div class="settings-management-page">
+
+  <!-- 1. TOP HEADER & QUICK ACTION BAR (Matches Reference Image 1) -->
+  <header class="settings-top-header">
+    <div class="header-branding">
+      <div class="brand-icon-wrapper">
+        <span class="brand-icon">⚙️</span>
+      </div>
+      <div class="brand-text">
+        <div class="brand-badge">CONTROL PANEL</div>
+        <h1 class="brand-title">ONLINE MUNIM CONTROL PANEL</h1>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-action-pill scheme-btn" title="View Scheme Rates">
+        <span class="pill-dot"></span> SCHEME RATES
+      </button>
+      <button type="button" class="btn-action-pill led-btn" title="LED Rate Board Configuration">
+        <span class="pill-dot"></span> LED RATES
+      </button>
+      <button type="button" class="btn-action-pill mcx-btn" title="Sync Live MCX Daily Metal Rates">
+        <span class="pill-ico">🔄</span> UPDATE MCX DAILY RATES
+      </button>
+      <button type="button" class="btn-action-pill help-btn" title="System Help & Documentation">
+        <span class="pill-ico">❓</span> HELP
+      </button>
+    </div>
+  </header>
+
+  <!-- Notification Banner -->
+  @if (message()) {
+    <div class="settings-alert" [class.success]="message()?.type === 'success'" [class.info]="message()?.type === 'info'" [class.error]="message()?.type === 'error'">
+      <span class="alert-text">{{ message()?.text }}</span>
+      <button type="button" class="close-alert-btn" (click)="message.set(null)">✕</button>
+    </div>
+  }
+
+  <!-- 2. MAIN 13-TAB NAVIGATION BAR (Matches Reference Images 1 & 2) -->
+  <div class="modern-settings-nav-card">
+    <nav class="settings-main-tabs" role="tablist">
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'DAILY_RATES'"
+        (click)="setMainTab('DAILY_RATES')"
+        title="Daily Gold & Silver Metal Rates"
+      >
+        <span class="tab-ico">📈</span>
+        <span class="tab-lbl">DAILY RATES</span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'METALS'"
+        (click)="setMainTab('METALS')"
+        title="Metal Master Configuration"
+      >
+        <span class="tab-ico">🪙</span>
+        <span class="tab-lbl">METAL NAMES</span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'PURITY'"
+        (click)="setMainTab('PURITY')"
+        title="Carat & Purity Definitions"
+      >
+        <span class="tab-ico">✨</span>
+        <span class="tab-lbl">PURITY</span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'CRYSTAL'"
+        (click)="setMainTab('CRYSTAL')"
+        title="Diamond & Gemstone Rates"
+      >
+        <span class="tab-ico">💎</span>
+        <span class="tab-lbl">CRYSTAL RATE</span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'ITEMS'"
+        (click)="setMainTab('ITEMS')"
+        title="Jewellery Ornament Categories"
+      >
+        <span class="tab-ico">💍</span>
+        <span class="tab-lbl">ITEM NAMES</span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'CITIES'"
+        (click)="setMainTab('CITIES')"
+        title="City Directory"
+      >
+        <span class="tab-ico">🏙️</span>
+        <span class="tab-lbl">CITY LIST</span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'COUNTRIES'"
+        (click)="setMainTab('COUNTRIES')"
+        title="Country Directory"
+      >
+        <span class="tab-ico">🌍</span>
+        <span class="tab-lbl">COUNTRY LIST</span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'STATES'"
+        (click)="setMainTab('STATES')"
+        title="State Directory"
+      >
+        <span class="tab-ico">🗺️</span>
+        <span class="tab-lbl">STATE LIST</span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'ROI'"
+        (click)="setMainTab('ROI')"
+        title="Rate of Interest & Slabs"
+      >
+        <span class="tab-ico">📉</span>
+        <span class="tab-lbl">ROI</span>
+      </button>
+
+      <!-- FORMS TAB (HIGHLIGHTED / PRIMARY WORKFLOW AS REQUESTED) -->
+      <button
+        type="button"
+        class="main-tab-btn forms-tab"
+        [class.active]="activeMainTab() === 'FORMS'"
+        (click)="setMainTab('FORMS')"
+        title="Document Templates, Notices & Voucher Printing"
+      >
+        <span class="tab-ico">📝</span>
+        <span class="tab-lbl">FORMS</span>
+        <span class="active-dot"></span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'MASTER'"
+        (click)="setMainTab('MASTER')"
+        title="Master Records"
+      >
+        <span class="tab-ico">📁</span>
+        <span class="tab-lbl">MASTER</span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'LAYOUT'"
+        (click)="setMainTab('LAYOUT')"
+        title="Screen & Grid Layouts"
+      >
+        <span class="tab-ico">📐</span>
+        <span class="tab-lbl">LAYOUT</span>
+      </button>
+
+      <button
+        type="button"
+        class="main-tab-btn"
+        [class.active]="activeMainTab() === 'DATA'"
+        (click)="setMainTab('DATA')"
+        title="Backup, Export & Data Tools"
+      >
+        <span class="tab-ico">💾</span>
+        <span class="tab-lbl">DATA</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- 3. MAIN WORKSPACE CONTENT -->
+  @if (activeMainTab() === 'FORMS') {
+
+    <!-- SUB-NAVIGATION BAR FOR FORMS (Matches Reference Image 2) -->
+    <div class="forms-subnav-bar">
+      <nav class="subnav-pill-group">
+        <button
+          type="button"
+          class="subnav-pill-btn"
+          [class.active]="activeFormTab() === 'LOAN_NOTICE'"
+          (click)="setFormTab('LOAN_NOTICE')"
+        >
+          <span class="pill-icon">📜</span>
+          <span class="pill-label">LOAN / GIRVI NOTICE</span>
+        </button>
+
+        <button
+          type="button"
+          class="subnav-pill-btn"
+          [class.active]="activeFormTab() === 'MONEY_DEPOSIT'"
+          (click)="setFormTab('MONEY_DEPOSIT')"
+        >
+          <span class="pill-icon">💵</span>
+          <span class="pill-label">MONEY DEPOSIT</span>
+        </button>
+
+        <button
+          type="button"
+          class="subnav-pill-btn"
+          [class.active]="activeFormTab() === 'FORM_N8'"
+          (click)="setFormTab('FORM_N8')"
+        >
+          <span class="pill-icon">📋</span>
+          <span class="pill-label">FORM N / 8</span>
+        </button>
+
+        <button
+          type="button"
+          class="subnav-pill-btn"
+          [class.active]="activeFormTab() === 'FORM_R7'"
+          (click)="setFormTab('FORM_R7')"
+        >
+          <span class="pill-icon">📑</span>
+          <span class="pill-label">FORM R / 7</span>
+        </button>
+
+        <button
+          type="button"
+          class="subnav-pill-btn"
+          [class.active]="activeFormTab() === 'UDHAAR_NOTICE'"
+          (click)="setFormTab('UDHAAR_NOTICE')"
+        >
+          <span class="pill-icon">⚖️</span>
+          <span class="pill-label">UDHAAR NOTICE</span>
+        </button>
+
+        <button
+          type="button"
+          class="subnav-pill-btn"
+          [class.active]="activeFormTab() === 'CUSTOM_FORM'"
+          (click)="setFormTab('CUSTOM_FORM')"
+        >
+          <span class="pill-icon">🎨</span>
+          <span class="pill-label">CUSTOMIZED FORM PANEL</span>
+        </button>
+      </nav>
+
+      <div class="subnav-quick-actions">
+        <button
+          type="button"
+          class="btn-toggle-preview"
+          (click)="showLivePreview.set(!showLivePreview())"
+          [title]="showLivePreview() ? 'Hide Live Notice Preview' : 'Show Live Notice Preview'"
+        >
+          {{ showLivePreview() ? '👁 Hide Live Preview' : '👁 Show Live Preview' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- 4. ACTIVE FORM SUB-VIEW -->
+    @if (activeFormTab() === 'LOAN_NOTICE') {
+      <!-- LOAN NOTICE SETUP PANEL (Matches Reference Image 2 with Modern UI) -->
+      <section class="loan-notice-setup-workspace" [class.preview-active]="showLivePreview()">
+
+        <!-- LEFT COLUMN: CONFIGURATION CONTROLS -->
+        <div class="config-controls-card">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <span class="panel-badge-icon">📜</span>
+              <div>
+                <h2>Loan Notice Setup Panel</h2>
+                <p class="panel-subtext">Configure typography, margins, logos, firm headers, and legal notice clauses for printed Girvi notices</p>
+              </div>
+            </div>
+
+            <div class="panel-action-buttons">
+              <button
+                type="button"
+                class="btn-reset"
+                (click)="resetDefaults()"
+                [disabled]="isLoading() || isSaving()"
+                title="Reset to factory default values"
+              >
+                🔄 Reset Defaults
+              </button>
+              <button
+                type="button"
+                class="btn-print-sample"
+                (click)="printSampleNotice()"
+                title="Print a test sample notice"
+              >
+                🖨️ Print Sample
+              </button>
+              <button
+                type="button"
+                class="btn-save"
+                (click)="saveSettings()"
+                [disabled]="isSaving()"
+                title="Save and apply configuration"
+              >
+                {{ isSaving() ? 'Saving…' : '💾 Save Settings' }}
+              </button>
+            </div>
+          </div>
+
+          <form class="setup-form-body" (submit)="$event.preventDefault(); saveSettings()">
+
+            <!-- SECTION A: LANGUAGE & PAPER DIMENSIONS -->
+            <div class="form-section-card">
+              <div class="section-title">
+                <span class="sec-num">1</span>
+                <h3>Language & Paper Format</h3>
+              </div>
+
+              <div class="form-row grid-4-col">
+                <div class="form-group">
+                  <label class="form-label">Notice Viewing Language:</label>
+                  <select class="form-select" [(ngModel)]="loanNotice.noticeViewingLanguage" name="noticeViewingLanguage">
+                    @for (lang of languages; track lang) {
+                      <option [value]="lang">{{ lang }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Default Language:</label>
+                  <select class="form-select" [(ngModel)]="loanNotice.defaultLanguage" name="defaultLanguage">
+                    @for (lang of languages; track lang) {
+                      <option [value]="lang">{{ lang }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Paper Size:</label>
+                  <select class="form-select" [(ngModel)]="loanNotice.paperSize" name="paperSize">
+                    @for (size of paperSizes; track size) {
+                      <option [value]="size">{{ size }}</option>
+                    }
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Document Width (mm):</label>
+                  <div class="input-with-action">
+                    <input
+                      type="number"
+                      class="form-input"
+                      [(ngModel)]="loanNotice.documentWidth"
+                      name="documentWidth"
+                      placeholder="135"
+                    />
+                    <button type="button" class="btn-inline-secondary" title="Add language translation dictionary">
+                      + Add Language
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION B: MARGINS & BORDER -->
+            <div class="form-section-card">
+              <div class="section-title">
+                <span class="sec-num">2</span>
+                <h3>Page Margins & Border Styling</h3>
+              </div>
+
+              <div class="form-row grid-3-col">
+                <div class="form-group">
+                  <label class="form-label">Top Margin (mm):</label>
+                  <div class="input-stepper">
+                    <input
+                      type="number"
+                      class="form-input"
+                      [(ngModel)]="loanNotice.topMargin"
+                      name="topMargin"
+                      placeholder="Top Margin (mm)"
+                    />
+                    <span class="input-unit">mm</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Left Margin (mm):</label>
+                  <div class="input-stepper">
+                    <input
+                      type="number"
+                      class="form-input"
+                      [(ngModel)]="loanNotice.leftMargin"
+                      name="leftMargin"
+                      placeholder="Left Margin (mm)"
+                    />
+                    <span class="input-unit">mm</span>
+                  </div>
+                </div>
+
+                <div class="form-group checkbox-cell">
+                  <label class="modern-toggle-box">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="loanNotice.formBorder"
+                      name="formBorder"
+                    />
+                    <span class="toggle-custom"></span>
+                    <span class="toggle-label-text">
+                      <strong>Form Border</strong>
+                      <small>Print decorative notice outer border</small>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION C: HEADER SECTION & LOGOS -->
+            <div class="form-section-card">
+              <div class="section-title">
+                <span class="sec-num">3</span>
+                <h3>Header Banner & Emblem Logos</h3>
+              </div>
+
+              <div class="form-row grid-4-col">
+                <div class="form-group">
+                  <label class="form-label">Header Section (pt / mm):</label>
+                  <input
+                    type="number"
+                    class="form-input"
+                    [(ngModel)]="loanNotice.headerSectionHeight"
+                    name="headerSectionHeight"
+                    placeholder="25"
+                  />
+                </div>
+
+                <div class="form-group checkbox-cell">
+                  <label class="modern-toggle-box">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="loanNotice.displayHeader"
+                      name="displayHeader"
+                    />
+                    <span class="toggle-custom"></span>
+                    <span class="toggle-label-text">
+                      <strong>Display Header</strong>
+                      <small>Show upper banner block</small>
+                    </span>
+                  </label>
+                </div>
+
+                <div class="form-group checkbox-cell">
+                  <label class="modern-toggle-box">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="loanNotice.formLeftLogo"
+                      name="formLeftLogo"
+                    />
+                    <span class="toggle-custom"></span>
+                    <span class="toggle-label-text">
+                      <strong>Form Left Logo</strong>
+                      <small>Show left emblem</small>
+                    </span>
+                  </label>
+                </div>
+
+                <div class="form-group checkbox-cell">
+                  <label class="modern-toggle-box">
+                    <input
+                      type="checkbox"
+                      [(ngModel)]="loanNotice.formRightLogo"
+                      name="formRightLogo"
+                    />
+                    <span class="toggle-custom"></span>
+                    <span class="toggle-label-text">
+                      <strong>Form Right Logo</strong>
+                      <small>Show right emblem</small>
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION D: HEADER SECTIONS & DOCUMENT TITLE (Matches Exact Image 2 Row Structure) -->
+            <div class="form-section-card">
+              <div class="section-title">
+                <span class="sec-num">4</span>
+                <h3>Header Left, Right & Document Label</h3>
+              </div>
+
+              <!-- Header Left Section -->
+              <div class="config-composite-row">
+                <div class="composite-label">Header Left Section:</div>
+                <div class="composite-inputs">
+                  <input
+                    type="text"
+                    class="form-input text-field"
+                    [(ngModel)]="loanNotice.headerLeftText"
+                    name="headerLeftText"
+                    placeholder="श्री गणेशाय नमः"
+                  />
+                  <select class="form-select size-field" [(ngModel)]="loanNotice.headerLeftFontSize" name="headerLeftFontSize" title="Font Size">
+                    @for (s of fontSizes; track s) {
+                      <option [value]="s">{{ s }} pt</option>
+                    }
+                  </select>
+                  <select class="form-select color-field" [(ngModel)]="loanNotice.headerLeftColor" name="headerLeftColor" title="Font Color">
+                    @for (c of colors; track c) {
+                      <option [value]="c">{{ c }}</option>
+                    }
+                  </select>
+                  <label class="checkbox-inline" title="Show / Hide in document">
+                    <input type="checkbox" [(ngModel)]="loanNotice.headerLeftVisible" name="headerLeftVisible" />
+                    <span class="chk-lbl">Show</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Header Right Section -->
+              <div class="config-composite-row">
+                <div class="composite-label">Header Right Section:</div>
+                <div class="composite-inputs">
+                  <input
+                    type="text"
+                    class="form-input text-field"
+                    [(ngModel)]="loanNotice.headerRightText"
+                    name="headerRightText"
+                    placeholder="|| ॐ नमः शिवाय ||"
+                  />
+                  <select class="form-select size-field" [(ngModel)]="loanNotice.headerRightFontSize" name="headerRightFontSize" title="Font Size">
+                    @for (s of fontSizes; track s) {
+                      <option [value]="s">{{ s }} pt</option>
+                    }
+                  </select>
+                  <select class="form-select color-field" [(ngModel)]="loanNotice.headerRightColor" name="headerRightColor" title="Font Color">
+                    @for (c of colors; track c) {
+                      <option [value]="c">{{ c }}</option>
+                    }
+                  </select>
+                  <label class="checkbox-inline" title="Show / Hide in document">
+                    <input type="checkbox" [(ngModel)]="loanNotice.headerRightVisible" name="headerRightVisible" />
+                    <span class="chk-lbl">Show</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Header Label (Like Girvi/Loan Notice) -->
+              <div class="config-composite-row highlight-row">
+                <div class="composite-label">Header Label (Like Girvi/Loan Notice):</div>
+                <div class="composite-inputs">
+                  <input
+                    type="text"
+                    class="form-input text-field"
+                    [(ngModel)]="loanNotice.headerLabelText"
+                    name="headerLabelText"
+                    placeholder="GIRVI / LOAN NOTICE"
+                  />
+                  <select class="form-select size-field" [(ngModel)]="loanNotice.headerLabelFontSize" name="headerLabelFontSize" title="Font Size">
+                    @for (s of fontSizes; track s) {
+                      <option [value]="s">{{ s }} pt</option>
+                    }
+                  </select>
+                  <select class="form-select color-field" [(ngModel)]="loanNotice.headerLabelColor" name="headerLabelColor" title="Font Color">
+                    @for (c of colors; track c) {
+                      <option [value]="c">{{ c }}</option>
+                    }
+                  </select>
+                  <label class="checkbox-inline" title="Show / Hide in document">
+                    <input type="checkbox" [(ngModel)]="loanNotice.headerLabelVisible" name="headerLabelVisible" />
+                    <span class="chk-lbl">Show</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- SECTION E: FIRM DETAILS & TYPOGRAPHY (Matches Exact Image 2 Fields) -->
+            <div class="form-section-card">
+              <div class="section-title">
+                <span class="sec-num">5</span>
+                <h3>Firm Header & Information Settings</h3>
+              </div>
+
+              <div class="firm-settings-grid">
+
+                <!-- Form Header -->
+                <div class="config-composite-row">
+                  <div class="composite-label">Form Header:</div>
+                  <div class="composite-inputs mini">
+                    <select class="form-select size-field" [(ngModel)]="loanNotice.formHeaderFontSize" name="formHeaderFontSize" title="Font Size">
+                      @for (s of fontSizes; track s) {
+                        <option [value]="s">{{ s }} pt</option>
+                      }
+                    </select>
+                    <select class="form-select color-field" [(ngModel)]="loanNotice.formHeaderColor" name="formHeaderColor" title="Font Color">
+                      @for (c of colors; track c) {
+                        <option [value]="c">{{ c }}</option>
+                      }
+                    </select>
+                    <label class="checkbox-inline">
+                      <input type="checkbox" [(ngModel)]="loanNotice.formHeaderVisible" name="formHeaderVisible" />
+                      <span class="chk-lbl">Show</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Firm Name -->
+                <div class="config-composite-row">
+                  <div class="composite-label">Firm Name:</div>
+                  <div class="composite-inputs mini">
+                    <select class="form-select size-field" [(ngModel)]="loanNotice.firmNameFontSize" name="firmNameFontSize" title="Font Size">
+                      @for (s of fontSizes; track s) {
+                        <option [value]="s">{{ s }} pt</option>
+                      }
+                    </select>
+                    <select class="form-select color-field" [(ngModel)]="loanNotice.firmNameColor" name="firmNameColor" title="Font Color">
+                      @for (c of colors; track c) {
+                        <option [value]="c">{{ c }}</option>
+                      }
+                    </select>
+                    <label class="checkbox-inline">
+                      <input type="checkbox" [(ngModel)]="loanNotice.firmNameVisible" name="firmNameVisible" />
+                      <span class="chk-lbl">Show</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Firm Description -->
+                <div class="config-composite-row">
+                  <div class="composite-label">Firm Description:</div>
+                  <div class="composite-inputs mini">
+                    <select class="form-select size-field" [(ngModel)]="loanNotice.firmDesFontSize" name="firmDesFontSize" title="Font Size">
+                      @for (s of fontSizes; track s) {
+                        <option [value]="s">{{ s }} pt</option>
+                      }
+                    </select>
+                    <select class="form-select color-field" [(ngModel)]="loanNotice.firmDesColor" name="firmDesColor" title="Font Color">
+                      @for (c of colors; track c) {
+                        <option [value]="c">{{ c }}</option>
+                      }
+                    </select>
+                    <label class="checkbox-inline">
+                      <input type="checkbox" [(ngModel)]="loanNotice.firmDesVisible" name="firmDesVisible" />
+                      <span class="chk-lbl">Show</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Firm Address -->
+                <div class="config-composite-row">
+                  <div class="composite-label">Firm Address:</div>
+                  <div class="composite-inputs mini">
+                    <select class="form-select size-field" [(ngModel)]="loanNotice.firmAddressFontSize" name="firmAddressFontSize" title="Font Size">
+                      @for (s of fontSizes; track s) {
+                        <option [value]="s">{{ s }} pt</option>
+                      }
+                    </select>
+                    <select class="form-select color-field" [(ngModel)]="loanNotice.firmAddressColor" name="firmAddressColor" title="Font Color">
+                      @for (c of colors; track c) {
+                        <option [value]="c">{{ c }}</option>
+                      }
+                    </select>
+                    <label class="checkbox-inline">
+                      <input type="checkbox" [(ngModel)]="loanNotice.firmAddressVisible" name="firmAddressVisible" />
+                      <span class="chk-lbl">Show</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Phone -->
+                <div class="config-composite-row">
+                  <div class="composite-label">Phone:</div>
+                  <div class="composite-inputs mini">
+                    <select class="form-select size-field" [(ngModel)]="loanNotice.phoneFontSize" name="phoneFontSize" title="Font Size">
+                      @for (s of fontSizes; track s) {
+                        <option [value]="s">{{ s }} pt</option>
+                      }
+                    </select>
+                    <select class="form-select color-field" [(ngModel)]="loanNotice.phoneColor" name="phoneColor" title="Font Color">
+                      @for (c of colors; track c) {
+                        <option [value]="c">{{ c }}</option>
+                      }
+                    </select>
+                    <label class="checkbox-inline">
+                      <input type="checkbox" [(ngModel)]="loanNotice.phoneVisible" name="phoneVisible" />
+                      <span class="chk-lbl">Show</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Email -->
+                <div class="config-composite-row">
+                  <div class="composite-label">Email:</div>
+                  <div class="composite-inputs mini">
+                    <select class="form-select size-field" [(ngModel)]="loanNotice.emailFontSize" name="emailFontSize" title="Font Size">
+                      @for (s of fontSizes; track s) {
+                        <option [value]="s">{{ s }} pt</option>
+                      }
+                    </select>
+                    <select class="form-select color-field" [(ngModel)]="loanNotice.emailColor" name="emailColor" title="Font Color">
+                      @for (c of colors; track c) {
+                        <option [value]="c">{{ c }}</option>
+                      }
+                    </select>
+                    <label class="checkbox-inline">
+                      <input type="checkbox" [(ngModel)]="loanNotice.emailVisible" name="emailVisible" />
+                      <span class="chk-lbl">Show</span>
+                    </label>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- SECTION F: NOTICE TERMS & LEGAL CLAUSES -->
+            <div class="form-section-card">
+              <div class="section-title">
+                <span class="sec-num">6</span>
+                <h3>Notice Terms & Signatory</h3>
+              </div>
+
+              <div class="form-row grid-2-col">
+                <div class="form-group">
+                  <label class="form-label">Warning Settlement Period (Days):</label>
+                  <input
+                    type="number"
+                    class="form-input"
+                    [(ngModel)]="loanNotice.warningPeriodDays"
+                    name="warningPeriodDays"
+                    placeholder="15"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Money Lending / Pawn License No:</label>
+                  <input
+                    type="text"
+                    class="form-input"
+                    [(ngModel)]="loanNotice.licenseNo"
+                    name="licenseNo"
+                    placeholder="e.g. WB-GIRVI-2026/8941"
+                  />
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 0.75rem;">
+                <label class="form-label">Notice Subject Line:</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="loanNotice.noticeSubject"
+                  name="noticeSubject"
+                />
+              </div>
+
+              <div class="form-group" style="margin-top: 0.75rem;">
+                <label class="form-label">Default Notice Body Description:</label>
+                <textarea
+                  class="form-textarea"
+                  rows="3"
+                  [(ngModel)]="loanNotice.noticeBody"
+                  name="noticeBody"
+                ></textarea>
+              </div>
+
+              <div class="form-group" style="margin-top: 0.75rem;">
+                <label class="form-label">Authorized Signatory Title:</label>
+                <input
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="loanNotice.signatoryTitle"
+                  name="signatoryTitle"
+                />
+              </div>
+            </div>
+
+          </form>
+        </div>
+
+        <!-- RIGHT COLUMN: LIVE INTERACTIVE A5 NOTICE PREVIEW -->
+        @if (showLivePreview()) {
+          <div class="live-preview-container">
+            <div class="preview-header">
+              <div class="preview-title">
+                <span class="live-indicator-dot"></span>
+                <strong>Live Document Preview</strong>
+                <span class="badge-paper">{{ loanNotice.paperSize }}</span>
+              </div>
+              <button type="button" class="btn-print-preview" (click)="printSampleNotice()" title="Print this preview">
+                🖨️ Print Notice
+              </button>
+            </div>
+
+            <!-- Printable Sheet Area -->
+            <div class="preview-scroll-viewport">
+              <div
+                class="printed-notice-sheet"
+                [class.has-border]="loanNotice.formBorder"
+                [style.padding-top.mm]="loanNotice.topMargin"
+                [style.padding-left.mm]="loanNotice.leftMargin"
+                [style.padding-right.mm]="loanNotice.rightMargin"
+                [style.padding-bottom.mm]="loanNotice.bottomMargin"
+                id="printableLoanNotice"
+              >
+
+                <!-- Upper Banner / Header -->
+                @if (loanNotice.displayHeader) {
+                  <header class="sheet-header">
+                    <div class="sheet-invocations">
+                      @if (loanNotice.headerLeftVisible) {
+                        <span
+                          class="invoc-left"
+                          [style.font-size.pt]="loanNotice.headerLeftFontSize"
+                          [style.color]="getColorHex(loanNotice.headerLeftColor)"
+                        >
+                          {{ loanNotice.headerLeftText }}
+                        </span>
+                      }
+                      @if (loanNotice.headerRightVisible) {
+                        <span
+                          class="invoc-right"
+                          [style.font-size.pt]="loanNotice.headerRightFontSize"
+                          [style.color]="getColorHex(loanNotice.headerRightColor)"
+                        >
+                          {{ loanNotice.headerRightText }}
+                        </span>
+                      }
+                    </div>
+
+                    <!-- Firm Info Block with Logos -->
+                    <div class="sheet-firm-block">
+                      @if (loanNotice.formLeftLogo) {
+                        <div class="sheet-emblem left">
+                          <span class="emblem-glyph">🪙</span>
+                        </div>
+                      }
+
+                      <div class="sheet-firm-info">
+                        @if (loanNotice.firmNameVisible) {
+                          <h1
+                            class="sheet-firm-name"
+                            [style.font-size.pt]="loanNotice.firmNameFontSize"
+                            [style.color]="getColorHex(loanNotice.firmNameColor)"
+                          >
+                            {{ loanNotice.firmName }}
+                          </h1>
+                        }
+                        @if (loanNotice.firmDesVisible) {
+                          <div
+                            class="sheet-firm-des"
+                            [style.font-size.pt]="loanNotice.firmDesFontSize"
+                            [style.color]="getColorHex(loanNotice.firmDesColor)"
+                          >
+                            {{ loanNotice.firmDes }}
+                          </div>
+                        }
+                        @if (loanNotice.firmAddressVisible) {
+                          <div
+                            class="sheet-firm-addr"
+                            [style.font-size.pt]="loanNotice.firmAddressFontSize"
+                            [style.color]="getColorHex(loanNotice.firmAddressColor)"
+                          >
+                            {{ loanNotice.firmAddress }}
+                          </div>
+                        }
+                        <div class="sheet-firm-contacts">
+                          @if (loanNotice.phoneVisible) {
+                            <span [style.font-size.pt]="loanNotice.phoneFontSize">📞 {{ loanNotice.phone }}</span>
+                          }
+                          @if (loanNotice.emailVisible) {
+                            <span [style.font-size.pt]="loanNotice.emailFontSize">✉ {{ loanNotice.email }}</span>
+                          }
+                          @if (loanNotice.licenseNo) {
+                            <span class="sheet-lic">Lic: {{ loanNotice.licenseNo }}</span>
+                          }
+                        </div>
+                      </div>
+
+                      @if (loanNotice.formRightLogo) {
+                        <div class="sheet-emblem right">
+                          <span class="emblem-glyph">⚖️</span>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Notice Label -->
+                    @if (loanNotice.headerLabelVisible) {
+                      <div class="sheet-notice-banner">
+                        <span
+                          class="sheet-notice-title"
+                          [style.font-size.pt]="loanNotice.headerLabelFontSize"
+                          [style.color]="getColorHex(loanNotice.headerLabelColor)"
+                        >
+                          {{ loanNotice.headerLabelText }}
+                        </span>
+                      </div>
+                    }
+                  </header>
+                }
+
+                <!-- Notice Meta Reference (Date & Ref) -->
+                <div class="sheet-meta-bar">
+                  <div class="meta-item">
+                    <strong>Notice Ref:</strong> {{ sampleBorrower.noticeNo }}
+                  </div>
+                  <div class="meta-item">
+                    <strong>Notice Date:</strong> {{ sampleBorrower.date }}
+                  </div>
+                </div>
+
+                <!-- Borrower Details -->
+                <div class="sheet-borrower-box">
+                  <div class="borrower-row">
+                    <span class="to-label">To,</span>
+                  </div>
+                  <div class="borrower-name"><strong>{{ sampleBorrower.customerName }}</strong> ({{ sampleBorrower.fatherSpouse }})</div>
+                  <div class="borrower-addr">{{ sampleBorrower.address }}</div>
+                  <div class="borrower-phone">Mobile: +91 {{ sampleBorrower.mobile }}</div>
+                </div>
+
+                <!-- Subject Line -->
+                <div class="sheet-subject-line">
+                  <strong>Subject:</strong> {{ loanNotice.noticeSubject }} (Girvi Ticket #{{ sampleBorrower.ticketNo }})
+                </div>
+
+                <!-- Notice Body Text -->
+                <div class="sheet-body-text">
+                  <p>{{ loanNotice.noticeBody }}</p>
+                </div>
+
+                <!-- Pledged Loan Particulars Table -->
+                <table class="sheet-loan-table">
+                  <thead>
+                    <tr>
+                      <th>Ticket #</th>
+                      <th>Pledge Date</th>
+                      <th>Pledged Gold/Silver Ornaments</th>
+                      <th>Principal</th>
+                      <th>Interest Due</th>
+                      <th>Total Due</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="bold-text">{{ sampleBorrower.ticketNo }}</td>
+                      <td>{{ sampleBorrower.pledgeDate }}</td>
+                      <td>{{ sampleBorrower.metalDescription }}</td>
+                      <td>₹{{ sampleBorrower.principalAmount | number:'1.2-2' }}</td>
+                      <td>₹{{ sampleBorrower.interestDue | number:'1.2-2' }}</td>
+                      <td class="total-due">₹{{ sampleBorrower.totalDue | number:'1.2-2' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <!-- Warning Notice Callout -->
+                <div class="sheet-warning-box">
+                  <strong>IMPORTANT STATUTORY NOTICE:</strong> You are hereby called upon to pay the outstanding balance of
+                  <strong>₹{{ sampleBorrower.totalDue | number:'1.2-2' }}</strong> with up-to-date interest within
+                  <strong>{{ loanNotice.warningPeriodDays }} DAYS</strong> from receipt of this notice, failing which the pledged ornaments
+                  will be scheduled for public auction / settlement as per the provisions of the Pawnbrokers Act and Shop Policy.
+                </div>
+
+                <!-- Signatory Footer -->
+                <div class="sheet-signatory-footer">
+                  <div class="sign-place">
+                    <div>Place: Kolkata</div>
+                    <div>Date: {{ sampleBorrower.date }}</div>
+                  </div>
+                  <div class="sign-seal">
+                    <div class="seal-placeholder">[ Shop Official Seal ]</div>
+                    <div class="sign-line">{{ loanNotice.signatoryTitle }}</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        }
+
+      </section>
+    }
+
+    <!-- SUB-TABS: PLACEHOLDERS FOR NEXT STEP-BY-STEP PROGRESSION -->
+    @if (activeFormTab() === 'MONEY_DEPOSIT') {
+      <div class="sub-tab-panel-card">
+        <div class="panel-hero">
+          <span class="hero-ico">💵</span>
+          <h3>Money Deposit Voucher & Receipt Setup</h3>
+          <p>Configure print slip layout for Cash & Bank money deposit receipts, voucher prefixes, and deposit terms.</p>
+          <div class="hero-status-pill">Ready for Step 2 Implementation</div>
+        </div>
+      </div>
+    }
+
+    @if (activeFormTab() === 'FORM_N8') {
+      <div class="sub-tab-panel-card">
+        <div class="panel-hero">
+          <span class="hero-ico">📋</span>
+          <h3>Form N / Form 8 - Statutory Pawn Ticket Register</h3>
+          <p>Official pawn ticket template under Section 7 & Rule 8 of the Indian Pawnbrokers Act with legal declarations.</p>
+          <div class="hero-status-pill">Ready for Step 3 Implementation</div>
+        </div>
+      </div>
+    }
+
+    @if (activeFormTab() === 'FORM_R7') {
+      <div class="sub-tab-panel-card">
+        <div class="panel-hero">
+          <span class="hero-ico">📑</span>
+          <h3>Form R / Form 7 - Loan Release Certificate</h3>
+          <p>Official redemption acknowledgment slip handed over to customer upon full principal and interest clearance.</p>
+          <div class="hero-status-pill">Ready for Step 4 Implementation</div>
+        </div>
+      </div>
+    }
+
+    @if (activeFormTab() === 'UDHAAR_NOTICE') {
+      <div class="sub-tab-panel-card">
+        <div class="panel-hero">
+          <span class="hero-ico">⚖️</span>
+          <h3>Credit / Udhaar Outstanding Demand Notice</h3>
+          <p>Customer ledger overdue balance statement and formal demand letter with interest calculation.</p>
+          <div class="hero-status-pill">Ready for Step 5 Implementation</div>
+        </div>
+      </div>
+    }
+
+    @if (activeFormTab() === 'CUSTOM_FORM') {
+      <div class="sub-tab-panel-card">
+        <div class="panel-hero">
+          <span class="hero-ico">🎨</span>
+          <h3>Customized Form Panel & Template Designer</h3>
+          <p>Design bespoke jewellery invoices, estimate slips, melting vouchers, and barcode tags with custom fields.</p>
+          <div class="hero-status-pill">Ready for Step 6 Implementation</div>
+        </div>
+      </div>
+    }
+
+  } @else {
+
+    <!-- PLACEHOLDER FOR MAIN TABS: STEP-BY-STEP ROLLOUT -->
+    <div class="main-tab-teaser-card">
+      <div class="teaser-content">
+        <span class="teaser-ico">
+          @switch (activeMainTab()) {
+            @case ('DAILY_RATES') { 📈 }
+            @case ('METALS') { 🪙 }
+            @case ('PURITY') { ✨ }
+            @case ('CRYSTAL') { 💎 }
+            @case ('ITEMS') { 💍 }
+            @case ('CITIES') { 🏙️ }
+            @case ('COUNTRIES') { 🌍 }
+            @case ('STATES') { 🗺️ }
+            @case ('ROI') { 📉 }
+            @case ('MASTER') { 📁 }
+            @case ('LAYOUT') { 📐 }
+            @case ('DATA') { 💾 }
+          }
+        </span>
+        <h2>{{ activeMainTab() | uppercase }} Configuration Panel</h2>
+        <p>This module is part of the Step-by-Step Settings rollout. We are currently focusing on the <strong>FORMS</strong> option first as requested.</p>
+        <button type="button" class="btn-return-forms" (click)="setMainTab('FORMS')">
+          ← Return to FORMS (Loan Notice Setup)
+        </button>
+      </div>
+    </div>
+
+  }
+
+</div>

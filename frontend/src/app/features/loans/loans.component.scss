@@ -6,53 +6,136 @@
   font-family: inherit;
 }
 
-/* 1. TOP GIRVI CATEGORY & REPORT TABS (Inspired by Reference Image 1) */
-.girvi-top-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  background: #fef08a; /* Soft amber/yellow toolbar like the original system, styled modern */
-  padding: 0.45rem 0.65rem;
-  border-radius: 8px 8px 0 0;
-  border: 1px solid #facc15;
-  border-bottom: none;
+/* 1. Modern Full-Width Navigation Tab Bar (Loans / Girvi Management) */
+.modern-tab-bar-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.4rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 4px 12px rgba(15, 23, 42, 0.02);
+  width: 100%;
+  margin-bottom: 0.85rem;
 
-  .nav-tab-btn {
-    background: transparent;
-    border: none;
-    padding: 0.5rem 0.85rem;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #713f12;
-    cursor: pointer;
-    border-radius: 6px;
-    display: inline-flex;
-    align-items: center;
+  .girvi-top-nav {
+    display: grid;
+    grid-template-columns: repeat(9, minmax(0, 1fr));
     gap: 0.4rem;
-    transition: all 0.15s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
+    width: 100%;
 
-    &:hover {
-      background: rgba(254, 240, 138, 0.6);
-      color: #854d0e;
-    }
-
-    &.active {
-      background: #ffffff;
-      color: #0f172a;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      font-weight: 800;
+    .nav-tab-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.72rem 0.35rem;
+      background: #f8fafc;
       border: 1px solid #e2e8f0;
-    }
+      border-radius: 9px;
+      color: #475569;
+      font-size: 0.76rem;
+      font-weight: 750;
+      letter-spacing: 0.025em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+      position: relative;
+      min-width: 0;
 
-    .tab-indicator-count {
-      background: #059669;
-      color: #ffffff;
-      font-size: 0.72rem;
-      padding: 0.1rem 0.45rem;
-      border-radius: 12px;
-      font-weight: 700;
+      .tab-icon {
+        font-size: 0.95rem;
+        line-height: 1;
+        flex-shrink: 0;
+        transition: transform 0.18s ease;
+      }
+
+      .tab-title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .tab-caret {
+        font-size: 0.7rem;
+        opacity: 0.65;
+        margin-left: -0.1rem;
+        line-height: 1;
+      }
+
+      .tab-indicator-count {
+        background: #e2e8f0;
+        color: #0f766e;
+        font-size: 0.68rem;
+        font-weight: 800;
+        padding: 0.12rem 0.45rem;
+        border-radius: 999px;
+        line-height: 1.2;
+        margin-left: 0.1rem;
+        flex-shrink: 0;
+
+        &.alert-count {
+          background: #fee2e2;
+          color: #dc2626;
+        }
+      }
+
+      &:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+
+        .tab-icon {
+          transform: scale(1.12);
+        }
+      }
+
+      &.active {
+        background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+        color: #ffffff;
+        border-color: #059669;
+        box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35), 0 1px 2px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+
+        .tab-icon {
+          filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+        }
+
+        .tab-caret {
+          opacity: 0.95;
+        }
+
+        .tab-indicator-count {
+          background: rgba(255, 255, 255, 0.25);
+          color: #ffffff;
+          border: 1px solid rgba(255, 255, 255, 0.35);
+
+          &.alert-count {
+            background: rgba(239, 68, 68, 0.35);
+            color: #fee2e2;
+            border-color: rgba(239, 68, 68, 0.5);
+          }
+        }
+      }
+    }
+  }
+
+  @media (max-width: 1400px) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.3rem;
+
+    .girvi-top-nav {
+      min-width: 1100px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 0.35rem;
+
+    .girvi-top-nav {
+      min-width: 980px;
     }
   }
 }
@@ -96,9 +179,9 @@
 .girvi-report-panel {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 0 0 10px 10px;
+  border-radius: 12px;
   padding: 1.25rem 1.5rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 4px 12px rgba(15, 23, 42, 0.02);
 }
 
 /* Header Banner */

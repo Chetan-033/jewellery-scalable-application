@@ -95,9 +95,23 @@ public class MasterDataService {
     public MasterDataDtos.CustomerResponse updateCustomer(String id, MasterDataDtos.CustomerRequest request) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Customer not found: " + id));
+        String reqCode = trim(request.code());
+        if (reqCode != null && !reqCode.isBlank() && !reqCode.equalsIgnoreCase(customer.getCode())) {
+            if (customerRepository.existsByCode(reqCode)) {
+                throw new BusinessException("CUSTOMER_CODE_EXISTS", "Customer code already exists: " + reqCode);
+            }
+            customer.setCode(reqCode);
+        }
         applyCustomerFields(customer, request);
         customerRepository.save(customer);
         return toCustomer(customer);
+    }
+
+    @Transactional
+    public void deleteCustomer(String id) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Customer not found: " + id));
+        customerRepository.delete(customer);
     }
 
     @Transactional(readOnly = true)
@@ -115,6 +129,14 @@ public class MasterDataService {
                 PageRequests.of(page, size, Sort.by(Sort.Direction.ASC, "name"))
         );
         return PageResponse.from(rows.map(this::toCustomerSummary));
+    }
+
+    @Transactional(readOnly = true)
+    public List<MasterDataDtos.CustomerResponse> listCustomers(String q) {
+        List<Customer> rows = (q == null || q.isBlank())
+                ? customerRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+                : customerRepository.search(q.trim());
+        return rows.stream().map(this::toCustomer).toList();
     }
 
     private void applyCustomerFields(Customer customer, MasterDataDtos.CustomerRequest request) {
@@ -136,6 +158,9 @@ public class MasterDataService {
         customer.setGstin(trim(request.gstin()));
         customer.setCity(trim(request.city()));
         customer.setAddress(trim(request.address()));
+        if (request.partyType() != null && !request.partyType().isBlank()) {
+            customer.setPartyType(trim(request.partyType()));
+        }
         customer.setTitle(trim(request.title()));
         customer.setGender(trim(request.gender()));
         customer.setSpouseName(trim(request.spouseName()));
@@ -290,7 +315,7 @@ public class MasterDataService {
         return new MasterDataDtos.CustomerResponse(
                 c.getId(), c.getCode(), c.getName(), c.getFirstName(), c.getLastName(), c.getFatherName(),
                 c.getPhone(), c.getEmail(), c.getGstin(), c.getCity(), c.getAddress(), c.getStatus(),
-                c.getTitle(), c.getGender(), c.getSpouseName(), c.getAltPhone(), c.getStateName(),
+                c.getPartyType(), c.getTitle(), c.getGender(), c.getSpouseName(), c.getAltPhone(), c.getStateName(),
                 c.getVillage(), c.getPincode(), c.getPanNo(), c.getAadhaarNo(), c.getCountryName(),
                 c.getHos(), c.getAccountGroup(), c.getRelationType(), c.getMotherName(), c.getDob(),
                 c.getSpouseDob(), c.getCaste(), c.getQualification(), c.getMaritalStatus(), c.getAnniversaryDate(),
@@ -302,7 +327,8 @@ public class MasterDataService {
                 c.getBusinessName(), c.getOfficeAddress(), c.getPermanentAddress(), c.getCurrentAddress(),
                 c.getShippingAddress(), c.getWardNumber(), c.getTehsil(), c.getOtherInfo(),
                 c.getPhotoBase64(), c.getAadhaarFrontBase64(), c.getAadhaarFrontDesc(),
-                c.getAadhaarBackBase64(), c.getAadhaarBackDesc(), c.getSendWelcomeSms()
+                c.getAadhaarBackBase64(), c.getAadhaarBackDesc(), c.getSendWelcomeSms(),
+                c.getCreatedAt() != null ? c.getCreatedAt().toString() : null
         );
     }
 

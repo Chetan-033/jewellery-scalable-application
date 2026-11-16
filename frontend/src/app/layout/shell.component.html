@@ -25,16 +25,29 @@
         <div class="nav-group">
           <p class="nav-group-title">{{ group.title }}</p>
           @for (item of group.items; track item.path + item.label) {
-            <a
-              [routerLink]="item.path"
-              routerLinkActive="active"
-              [routerLinkActiveOptions]="{ exact: !!item.exact }"
-              [attr.title]="item.label"
-              (click)="closeMobileNav()"
-            >
-              <span class="nav-ico" aria-hidden="true">{{ item.icon }}</span>
-              <span class="nav-label">{{ item.label }}</span>
-            </a>
+            <div class="nav-item-container" [class.has-dropdown]="item.hasDropdown">
+              <a
+                [routerLink]="item.path"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: !!item.exact }"
+                [attr.title]="item.label"
+                (click)="closeMobileNav(); closeUserFlyout()"
+              >
+                <span class="nav-ico" aria-hidden="true">{{ item.icon }}</span>
+                <span class="nav-label">{{ item.label }}</span>
+                @if (item.hasDropdown) {
+                  <button
+                    type="button"
+                    class="nav-caret-btn"
+                    (click)="toggleUserFlyout($event)"
+                    title="User Management Menu"
+                    [class.open]="userFlyoutOpen()"
+                  >
+                    ▾
+                  </button>
+                }
+              </a>
+            </div>
           }
         </div>
       }
@@ -100,4 +113,53 @@
       <router-outlet />
     </main>
   </div>
+
+  <!-- User List 2-Column Popup Menu (Exact match to Image 2) -->
+  @if (userFlyoutOpen()) {
+    <div class="flyout-overlay" (click)="closeUserFlyout()"></div>
+    <div class="sidebar-user-flyout" [style.top.px]="userFlyoutTop()">
+      <div class="flyout-header-tag">
+        <span class="ico">👤</span> USER MANAGEMENT MENU
+      </div>
+      <div class="flyout-columns-grid">
+        <!-- LEFT COLUMN: LISTS -->
+        <div class="flyout-col left-col">
+          <button type="button" class="flyout-btn" (click)="navigateAndClose('/app/masters', { tab: 'customer' })">
+            <span class="flyout-ico text-blue">👤</span> CUSTOMER LIST
+          </button>
+          <button type="button" class="flyout-btn" (click)="navigateAndClose('/app/masters', { tab: 'visitor' })">
+            <span class="flyout-ico text-orange">📦</span> VISITOR LIST
+          </button>
+          <button type="button" class="flyout-btn" (click)="navigateAndClose('/app/masters', { tab: 'supplier' })">
+            <span class="flyout-ico text-amber">👤</span> SUPPLIER LIST
+          </button>
+          <button type="button" class="flyout-btn" (click)="navigateAndClose('/app/masters', { tab: 'staff' })">
+            <span class="flyout-ico text-teal">👤⁺</span> STAFF LIST
+          </button>
+          <button type="button" class="flyout-btn" (click)="navigateAndClose('/app/masters', { tab: 'karigar' })">
+            <span class="flyout-ico text-red">👷</span> KARIGAR LIST
+          </button>
+          <button type="button" class="flyout-btn" (click)="navigateAndClose('/app/masters', { tab: 'moneyLender' })">
+            <span class="flyout-ico text-gold">💰</span> MONEY LENDER LIST
+          </button>
+        </div>
+
+        <!-- RIGHT COLUMN: ADDS -->
+        <div class="flyout-col right-col">
+          <button type="button" class="flyout-btn highlight-add" (click)="navigateAndClose('/app/masters/customers/add')">
+            <span class="flyout-ico text-blue">👤⁺</span> ADD CUSTOMER
+          </button>
+          <button type="button" class="flyout-btn" (click)="navigateAndClose('/app/masters', { tab: 'supplier', action: 'add' })">
+            <span class="flyout-ico text-amber">🔑⁺</span> ADD SUPPLIER
+          </button>
+          <button type="button" class="flyout-btn" (click)="navigateAndClose('/app/masters', { tab: 'staff', action: 'add' })">
+            <span class="flyout-ico text-teal">👤⁺</span> ADD STAFF
+          </button>
+          <button type="button" class="flyout-btn" (click)="navigateAndClose('/app/masters', { tab: 'moneyLender', action: 'add' })">
+            <span class="flyout-ico text-gold">💰⁺</span> ADD MONEY LENDER
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

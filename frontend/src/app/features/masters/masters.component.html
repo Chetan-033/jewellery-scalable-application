@@ -1,128 +1,518 @@
-<div class="page-head">
-  <div>
-    <h1>User / Masters</h1>
-    <p>Customer cards, suppliers, metals and purities.</p>
-  </div>
-</div>
+<div class="user-management-page">
 
-@if (message()) { <p class="flash">{{ message() }}</p> }
-
-<div class="tabs">
-  <button type="button" [class.active]="tab==='customers'" (click)="tab='customers'">Customer list</button>
-  <button type="button" [class.active]="tab==='suppliers'" (click)="tab='suppliers'">Supplier list</button>
-  <button type="button" [class.active]="tab==='metals'" (click)="tab='metals'">Metals</button>
-  <button type="button" [class.active]="tab==='purities'" (click)="tab='purities'">Purities</button>
-</div>
-
-@if (tab === 'customers') {
-  <section class="panel pad search-row" style="display:flex; justify-content:space-between; align-items:flex-end; gap:0.75rem;">
-    <div class="field grow">
-      <label>Search</label>
-      <input [(ngModel)]="q" name="q" (keyup.enter)="reload()" placeholder="Name / mobile / city" />
-    </div>
-    <div style="display:flex; gap:0.5rem;">
-      <button type="button" class="btn btn-info" (click)="reload()">Search</button>
-      <a routerLink="/app/masters/customers/add" class="btn btn-navy" style="text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem; white-space:nowrap;">
-        + New Customer Form
-      </a>
-    </div>
-  </section>
-
-  <div class="cust-grid">
-    @for (c of customers(); track c.id) {
-      <article class="cust-card panel">
-        <a [routerLink]="['/app/customers', c.id]" class="avatar" style="overflow:hidden; display:flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer;" title="View Customer Dashboard">
-          @if (c.photoBase64) {
-            <img [src]="resolveImageUrl(c.photoBase64)" alt="{{ c.name }}" style="width:100%; height:100%; object-fit:cover;" />
-          } @else {
-            {{ (c.firstName || c.name || '?').charAt(0) }}
-          }
-        </a>
-        <div class="body">
-          <h3>
-            <a [routerLink]="['/app/customers', c.id]" style="color:inherit; text-decoration:none; cursor:pointer;" title="View Customer Dashboard">
-              {{ c.name }} <span style="font-size:0.8rem; color:var(--emerald, #059669);">➔</span>
-            </a>
-          </h3>
-          @if (relationOf(c)) { <p class="rel">{{ relationOf(c) }}</p> }
-          <p class="phone">{{ c.phone || '—' }}</p>
-          <p class="meta">{{ c.code }} · {{ c.city || '—' }}</p>
-          <div class="actions">
-            <a [routerLink]="['/app/customers', c.id]" title="Open Customer Dashboard" style="width:auto; padding:0 0.55rem; font-weight:700; font-size:0.75rem; background:#1e293b; color:#fff; text-decoration:none;">Dashboard</a>
-            <a [routerLink]="['/app/customers', c.id]" [queryParams]="{ action: 'add-loan' }" title="+ Add Girvi / Loan" style="width:auto; padding:0 0.55rem; font-weight:700; font-size:0.75rem; background:#ecfdf5; color:#047857; text-decoration:none; border:1px solid #a7f3d0;">+ Loan</a>
-            <a [routerLink]="['/app/masters/customers', c.id, 'edit']" title="Edit Customer Details" style="font-weight:bold; text-decoration:none;">✎</a>
-            <a [routerLink]="['/app/sales']" [queryParams]="{ customerId: c.id }" title="Sell" style="text-decoration:none;">◆</a>
-            <a [routerLink]="['/app/credit']" [queryParams]="{ customerId: c.id }" title="Udhaar" style="text-decoration:none;">◎</a>
-          </div>
-        </div>
-      </article>
-    } @empty {
-      <p class="empty-hint">No customers found</p>
-    }
-  </div>
-}
-
-@if (tab === 'suppliers') {
-  <section class="panel pad">
-    <div class="form-grid">
-      <div class="field"><label>Code</label><input [(ngModel)]="supplierForm.code" name="sc" /></div>
-      <div class="field"><label>Name</label><input [(ngModel)]="supplierForm.name" name="sn" /></div>
-      <div class="field"><label>Phone</label><input [(ngModel)]="supplierForm.phone" name="sp" /></div>
-      <div class="field"><label>City</label><input [(ngModel)]="supplierForm.city" name="sct" /></div>
-    </div>
-    <button type="button" class="btn btn-navy" (click)="saveSupplier()">Save supplier</button>
-    <table class="data-table" style="margin-top:0.75rem">
-      <thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>City</th></tr></thead>
-      <tbody>
-        @for (s of suppliers(); track s.id) {
-          <tr><td>{{ s.code }}</td><td>{{ s.name }}</td><td>{{ s.phone || '—' }}</td><td>{{ s.city || '—' }}</td></tr>
-        } @empty { <tr><td colspan="4" class="empty-hint">No suppliers</td></tr> }
-      </tbody>
-    </table>
-  </section>
-}
-
-@if (tab === 'metals') {
-  <section class="panel pad">
-    <div class="form-grid">
-      <div class="field"><label>Code</label><input [(ngModel)]="metalForm.code" name="mc" /></div>
-      <div class="field"><label>Name</label><input [(ngModel)]="metalForm.name" name="mn" /></div>
-      <div class="field"><label>Symbol</label><input [(ngModel)]="metalForm.symbol" name="ms" /></div>
-    </div>
-    <button type="button" class="btn btn-navy" (click)="saveMetal()">Save metal</button>
-    <table class="data-table" style="margin-top:0.75rem">
-      <thead><tr><th>Code</th><th>Name</th><th>Symbol</th></tr></thead>
-      <tbody>
-        @for (m of metals(); track m.id) { <tr><td>{{ m.code }}</td><td>{{ m.name }}</td><td>{{ m.symbol || '—' }}</td></tr> }
-      </tbody>
-    </table>
-  </section>
-}
-
-@if (tab === 'purities') {
-  <section class="panel pad">
-    <div class="form-grid">
-      <div class="field"><label>Metal</label>
-        <select [(ngModel)]="purityForm.metalId" name="pm">
-          <option value="">—</option>
-          @for (m of metals(); track m.id) { <option [value]="m.id">{{ m.name }}</option> }
-        </select>
-      </div>
-      <div class="field"><label>Label</label><input [(ngModel)]="purityForm.label" name="pl" /></div>
-      <div class="field"><label>Fineness %</label><input type="number" step="0.0001" [(ngModel)]="purityForm.fineness" name="pf" /></div>
-    </div>
-    <button type="button" class="btn btn-navy" (click)="savePurity()">Save purity</button>
-    <table class="data-table" style="margin-top:0.75rem">
-      <thead><tr><th>Metal</th><th>Label</th><th>Fineness</th></tr></thead>
-      <tbody>
-        @for (p of purities(); track p.id) {
-          <tr>
-            <td>{{ metalName(p.metalId) }}</td>
-            <td>{{ p.label }}</td>
-            <td>{{ p.fineness }}</td>
-          </tr>
+  <!-- 1. Modern Full-Width Navigation Tab Bar -->
+  <div class="modern-tab-bar-card">
+    <div class="tab-grid-full">
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab === 'customer'"
+        (click)="selectTab('customer')"
+        title="View All Customers"
+      >
+        <span class="tab-icon">👤</span>
+        <span class="tab-title">CUSTOMER LIST</span>
+        <span class="tab-caret">▾</span>
+        @if (customers().length) {
+          <span class="tab-count-badge">{{ customers().length }}</span>
         }
-      </tbody>
-    </table>
-  </section>
-}
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab === 'supplier'"
+        (click)="selectTab('supplier')"
+        title="View All Suppliers"
+      >
+        <span class="tab-icon">📦</span>
+        <span class="tab-title">SUPPLIER LIST</span>
+        @if (suppliers().length) {
+          <span class="tab-count-badge">{{ suppliers().length }}</span>
+        }
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab === 'karigar'"
+        (click)="selectTab('karigar')"
+        title="View Karigar / Goldsmiths"
+      >
+        <span class="tab-icon">👷</span>
+        <span class="tab-title">KARIGAR LIST</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab === 'staff'"
+        (click)="selectTab('staff')"
+        title="View Employees & Staff"
+      >
+        <span class="tab-icon">👥</span>
+        <span class="tab-title">STAFF LIST</span>
+        <span class="tab-caret">▾</span>
+      </button>
+
+      <button
+        type="button"
+        class="tab-btn"
+        [class.active]="activeTab === 'moneyLender'"
+        (click)="selectTab('moneyLender')"
+        title="View Registered Money Lenders"
+      >
+        <span class="tab-icon">💰</span>
+        <span class="tab-title">MONEY LENDER LIST</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast / Flash Feedback Banner -->
+  @if (message()) {
+    <div class="user-alert-banner">
+      <span>ℹ {{ message() }}</span>
+      <button type="button" class="btn-close-toast" (click)="message.set(null)">✕</button>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB: CUSTOMER LIST VIEW (Exact match to Image 1 & 2)                      -->
+  <!-- ========================================================================= -->
+  @if (activeTab === 'customer') {
+
+    <!-- Subheader with Title, Fast Action Toolbar, and Category Filter -->
+    <div class="customer-sub-header">
+      <div class="header-left-group">
+        <div class="view-title">
+          <span class="user-ico">👤</span>
+          <h2>CUSTOMER LIST</h2>
+        </div>
+
+        <a routerLink="/app/masters/customers/add" class="btn-add-cust" title="Add New Customer">
+          <span class="ico">👤⁺</span> ADD CUSTOMER
+        </a>
+
+        <!-- Quick Search Bar with Instant Typeahead Suggestions Dropdown -->
+        <div class="search-input-box" (focusout)="closeSuggestions()">
+          <span class="search-ico">🔍</span>
+          <input
+            type="text"
+            [(ngModel)]="q"
+            name="q"
+            (input)="onSearchInput()"
+            (focus)="onSearchFocus()"
+            (keydown)="onSearchKeyDown($event)"
+            placeholder="Search name / mobile / city…"
+            autocomplete="off"
+          />
+          @if (q) {
+            <button type="button" class="btn-clear-q" (click)="clearSearch()">✕</button>
+          }
+
+          <!-- Floating Autocomplete Suggestions Dropdown -->
+          @if (showSuggestions() && searchSuggestions().length > 0) {
+            <div class="suggestions-dropdown-card">
+              <div class="suggestions-header">
+                <span>Matching Customers ({{ searchSuggestions().length }})</span>
+                <span class="hint-text">↑↓ navigate · Enter select</span>
+              </div>
+              <ul class="suggestions-list" role="listbox">
+                @for (c of searchSuggestions(); track c.id; let i = $index) {
+                  <li
+                    class="suggestion-item"
+                    [class.highlighted]="selectedSuggestionIndex() === i"
+                    (click)="selectSuggestion(c)"
+                  >
+                    <div class="sugg-avatar">
+                      @if (c.photoBase64) {
+                        <img [src]="resolveImageUrl(c.photoBase64)" alt="{{ c.name }}" />
+                      } @else {
+                        <span>👤</span>
+                      }
+                    </div>
+
+                    <div class="sugg-details">
+                      <div class="sugg-name-row">
+                        <strong class="sugg-name">{{ c.name | uppercase }}</strong>
+                        <span class="sugg-code">({{ c.code }})</span>
+                      </div>
+                      <div class="sugg-meta-row">
+                        @if (c.phone) {
+                          <span class="sugg-phone">📞 {{ c.phone }}</span>
+                        }
+                        @if (c.city) {
+                          <span class="sugg-city">📍 {{ c.city }}</span>
+                        }
+                        @if (relationOf(c)) {
+                          <span class="sugg-rel">· {{ relationOf(c) }}</span>
+                        }
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      class="btn-quick-dash"
+                      (click)="navigateCustomer(c); $event.stopPropagation()"
+                      title="Open Customer Profile"
+                    >
+                      Open →
+                    </button>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Right Side Category Filter (RETAIL / WHOLESALE / ALL) -->
+      <div class="header-right-group">
+        <button
+          type="button"
+          class="btn-cat-pill"
+          [class.active]="categoryFilter === 'RETAIL'"
+          (click)="setCategory('RETAIL')"
+          title="Retail Customers"
+        >
+          RETAIL
+        </button>
+
+        <button
+          type="button"
+          class="btn-cat-pill"
+          [class.active]="categoryFilter === 'WHOLESALE'"
+          (click)="setCategory('WHOLESALE')"
+          title="Wholesale Customers"
+        >
+          WHOLESALE
+        </button>
+
+        <button
+          type="button"
+          class="btn-cat-pill"
+          [class.active]="categoryFilter === 'ALL'"
+          (click)="setCategory('ALL')"
+          title="All Customers"
+        >
+          ALL
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. Dual-Column Customer List Container (Exact match to Image 1) -->
+    <div class="customer-split-container">
+
+      <!-- LEFT COLUMN (Up to 5 rows) -->
+      <div class="split-col left-pane">
+        @for (c of leftCustomers(); track c.id) {
+          <div class="cust-card-row" (click)="navigateCustomer(c)" title="Click to view full dashboard for {{ c.name }}">
+            
+            <!-- Avatar -->
+            <div class="avatar-cell">
+              @if (c.photoBase64) {
+                <img [src]="resolveImageUrl(c.photoBase64)" class="cust-photo" alt="{{ c.name }}" />
+              } @else {
+                <div class="cust-avatar-fallback">👤</div>
+              }
+            </div>
+
+            <!-- Customer Identity Info -->
+            <div class="info-cell">
+              <h3 class="cust-name-link">
+                {{ c.name | uppercase }}
+              </h3>
+              <div class="cust-phone-num">
+                {{ c.phone || 'No Mobile' }}
+              </div>
+              <div class="cust-sub-detail">
+                @if (relationOf(c)) { <span>{{ relationOf(c) }} · </span> }
+                <span>{{ c.city || 'Local' }}</span>
+                <span class="code-tag">({{ c.code }})</span>
+              </div>
+            </div>
+
+            <!-- Right Meta & Quick Actions Toolbar -->
+            <div class="actions-cell">
+              <div class="cust-date-stamp">
+                {{ (c.createdAt ? (c.createdAt | date:'yyyy-MM-dd HH:mm:ss') : '2026-11-06 15:20:00') }}
+              </div>
+
+              <div class="icon-action-bar">
+                <!-- 1. Customer Dashboard -->
+                <button type="button" class="btn-action-ico btn-home" (click)="navigateCustomer(c); $event.stopPropagation()" title="Customer Dashboard">
+                  🏠
+                </button>
+
+                <!-- 2. WhatsApp -->
+                <button type="button" class="btn-action-ico btn-wa" (click)="openWhatsApp(c, $event)" title="WhatsApp Chat">
+                  💬
+                </button>
+
+                <!-- 3. Sell / POS -->
+                <button type="button" class="btn-action-ico btn-sell" (click)="navigateSell(c, $event)" title="New Sale / Invoice">
+                  🏷️
+                </button>
+
+                <!-- 4. Order -->
+                <button type="button" class="btn-action-ico btn-order" (click)="navigateOrder(c, $event)" title="New Custom Order">
+                  📦
+                </button>
+
+                <!-- 5. SMS -->
+                <button type="button" class="btn-action-ico btn-sms" (click)="openSms(c, $event)" title="Send SMS">
+                  ✉️
+                </button>
+
+                <!-- 6. Girvi / Loans -->
+                <button type="button" class="btn-action-ico btn-loan" (click)="navigateAddLoan(c, $event)" title="Girvi Loans / + New Loan">
+                  🔒
+                </button>
+
+                <!-- 7. Edit Customer Details -->
+                <button type="button" class="btn-action-ico btn-edit" (click)="navigateEdit(c, $event)" title="Edit Customer Master">
+                  ✎
+                </button>
+              </div>
+            </div>
+
+          </div>
+        } @empty {
+          <div class="empty-state-notice">
+            <p>No customers found matching criteria.</p>
+          </div>
+        }
+      </div>
+
+      <!-- CENTER DIVIDER -->
+      <div class="center-vertical-divider"></div>
+
+      <!-- RIGHT COLUMN (Up to 5 rows) -->
+      <div class="split-col right-pane">
+        @for (c of rightCustomers(); track c.id) {
+          <div class="cust-card-row" (click)="navigateCustomer(c)" title="Click to view full dashboard for {{ c.name }}">
+            
+            <!-- Avatar -->
+            <div class="avatar-cell">
+              @if (c.photoBase64) {
+                <img [src]="resolveImageUrl(c.photoBase64)" class="cust-photo" alt="{{ c.name }}" />
+              } @else {
+                <div class="cust-avatar-fallback">👤</div>
+              }
+            </div>
+
+            <!-- Customer Identity Info -->
+            <div class="info-cell">
+              <h3 class="cust-name-link">
+                {{ c.name | uppercase }}
+              </h3>
+              <div class="cust-phone-num">
+                {{ c.phone || 'No Mobile' }}
+              </div>
+              <div class="cust-sub-detail">
+                @if (relationOf(c)) { <span>{{ relationOf(c) }} · </span> }
+                <span>{{ c.city || 'Local' }}</span>
+                <span class="code-tag">({{ c.code }})</span>
+              </div>
+            </div>
+
+            <!-- Right Meta & Quick Actions Toolbar -->
+            <div class="actions-cell">
+              <div class="cust-date-stamp">
+                {{ (c.createdAt ? (c.createdAt | date:'yyyy-MM-dd HH:mm:ss') : '2026-11-06 14:07:38') }}
+              </div>
+
+              <div class="icon-action-bar">
+                <!-- 1. Customer Dashboard -->
+                <button type="button" class="btn-action-ico btn-home" (click)="navigateCustomer(c); $event.stopPropagation()" title="Customer Dashboard">
+                  🏠
+                </button>
+
+                <!-- 2. WhatsApp -->
+                <button type="button" class="btn-action-ico btn-wa" (click)="openWhatsApp(c, $event)" title="WhatsApp Chat">
+                  💬
+                </button>
+
+                <!-- 3. Sell / POS -->
+                <button type="button" class="btn-action-ico btn-sell" (click)="navigateSell(c, $event)" title="New Sale / Invoice">
+                  🏷️
+                </button>
+
+                <!-- 4. Order -->
+                <button type="button" class="btn-action-ico btn-order" (click)="navigateOrder(c, $event)" title="New Custom Order">
+                  📦
+                </button>
+
+                <!-- 5. SMS -->
+                <button type="button" class="btn-action-ico btn-sms" (click)="openSms(c, $event)" title="Send SMS">
+                  ✉️
+                </button>
+
+                <!-- 6. Girvi / Loans -->
+                <button type="button" class="btn-action-ico btn-loan" (click)="navigateAddLoan(c, $event)" title="Girvi Loans / + New Loan">
+                  🔒
+                </button>
+
+                <!-- 7. Edit Customer Details -->
+                <button type="button" class="btn-action-ico btn-edit" (click)="navigateEdit(c, $event)" title="Edit Customer Master">
+                  ✎
+                </button>
+              </div>
+            </div>
+
+          </div>
+        } @empty {
+          <!-- Placeholder if less than 5 customers -->
+          @if (leftCustomers().length > 0) {
+            <div class="empty-state-notice">
+              <p>End of customer page</p>
+            </div>
+          }
+        }
+      </div>
+
+    </div>
+
+    <!-- 3. Bottom Pagination Bar (Exact match to Image 1) -->
+    <div class="pagination-footer-bar">
+      <div class="pagination-pills-list">
+        @for (p of pageNumbers(); track p) {
+          <button
+            type="button"
+            class="page-num-circle"
+            [class.active]="currentPage() === p"
+            (click)="goToPage(p)"
+          >
+            {{ p }}
+          </button>
+        }
+
+        <button
+          type="button"
+          class="page-nav-btn"
+          [disabled]="currentPage() >= totalPages()"
+          (click)="nextPage()"
+        >
+          NEXT
+        </button>
+
+        <span class="page-no-label">PAGE NO</span>
+      </div>
+    </div>
+
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB: SUPPLIER LIST                                                        -->
+  <!-- ========================================================================= -->
+  @if (activeTab === 'supplier') {
+    <div class="sub-tab-panel">
+      <div class="panel-header-row">
+        <h3>SUPPLIER LIST</h3>
+        <button type="button" class="btn-primary-action" (click)="showStub('Add Supplier Form')">
+          + ADD NEW SUPPLIER
+        </button>
+      </div>
+
+      <table class="modern-data-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Supplier Name</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>GSTIN</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (s of suppliers(); track s.id) {
+            <tr>
+              <td class="font-bold">{{ s.code }}</td>
+              <td class="font-bold text-blue">{{ s.name }}</td>
+              <td>{{ s.phone || '—' }}</td>
+              <td>{{ s.city || '—' }}</td>
+              <td>{{ s.gstin || '—' }}</td>
+              <td>
+                <button type="button" class="btn-table-action" (click)="showStub('Supplier Details')">View</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No suppliers registered. Click "+ ADD NEW SUPPLIER" to add.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB: KARIGAR LIST                                                         -->
+  <!-- ========================================================================= -->
+  @if (activeTab === 'karigar') {
+    <div class="sub-tab-panel">
+      <div class="panel-header-row">
+        <h3>KARIGAR / GOLDSMITH LIST</h3>
+        <button type="button" class="btn-primary-action" (click)="showStub('Add Karigar Form')">
+          + ADD NEW KARIGAR
+        </button>
+      </div>
+      <div class="stub-info-card">
+        <p>Karigar directory and job work accounts will be configured in the next phase as planned. Use <strong>ADD CUSTOMER</strong> for customer management.</p>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB: STAFF LIST                                                           -->
+  <!-- ========================================================================= -->
+  @if (activeTab === 'staff') {
+    <div class="sub-tab-panel">
+      <div class="panel-header-row">
+        <h3>STAFF / EMPLOYEE LIST</h3>
+        <button type="button" class="btn-primary-action" (click)="showStub('Add Staff Form')">
+          + ADD NEW STAFF
+        </button>
+      </div>
+      <div class="stub-info-card">
+        <p>Staff members, roles, commissions, and attendance will be configured in the next phase as planned. Use <strong>ADD CUSTOMER</strong> for customer management.</p>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB: MONEY LENDER LIST                                                    -->
+  <!-- ========================================================================= -->
+  @if (activeTab === 'moneyLender') {
+    <div class="sub-tab-panel">
+      <div class="panel-header-row">
+        <h3>MONEY LENDER LIST</h3>
+        <button type="button" class="btn-primary-action" (click)="showStub('Add Money Lender Form')">
+          + ADD NEW MONEY LENDER
+        </button>
+      </div>
+      <div class="stub-info-card">
+        <p>Money lenders, third-party pledgees, and inter-firm loans will be configured in the next phase as planned.</p>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- TAB: VISITOR LIST                                                         -->
+  <!-- ========================================================================= -->
+  @if (activeTab === 'visitor') {
+    <div class="sub-tab-panel">
+      <div class="panel-header-row">
+        <h3>VISITOR LIST</h3>
+        <button type="button" class="btn-primary-action" (click)="showStub('Add Visitor Form')">
+          + ADD NEW VISITOR
+        </button>
+      </div>
+      <div class="stub-info-card">
+        <p>Walk-in customer inquiries and visitor logs will be configured in the next phase as planned. Use <strong>ADD CUSTOMER</strong> for customer management.</p>
+      </div>
+    </div>
+  }
+
+</div>

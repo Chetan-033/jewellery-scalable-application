@@ -15,6 +15,7 @@ import { PurchaseComponent } from './features/purchase/purchase.component';
 import { OrdersComponent } from './features/orders/orders.component';
 import { LoansComponent } from './features/loans/loans.component';
 import { CreditComponent } from './features/credit/credit.component';
+import { SettingsComponent } from './features/settings/settings.component';
 import { ModulePageComponent } from './features/module-page/module-page.component';
 
 function upcoming(path: string, title: string, description: string, moduleCode: string, features: string[]) {
@@ -60,9 +61,8 @@ export const routes: Routes = [
       upcoming('reports', 'Reports', 'Operational reports.', 'reporting', [
         'Sales / stock / outstanding exports'
       ]),
-      upcoming('admin', 'Settings', 'Firm setup and backups.', 'platform', [
-        'Users / roles', 'Number series', 'Backup', 'Stock calc settings'
-      ])
+      { path: 'admin', component: SettingsComponent },
+      { path: 'settings', component: SettingsComponent }
     ]
   },
   {
