@@ -10,6 +10,8 @@ export interface UserInfo {
   displayName: string;
   roles: string[];
   permissions: string[];
+  tenantId?: string | null;
+  tenantCode?: string | null;
 }
 
 interface LoginResponse {
@@ -32,9 +34,25 @@ export class AuthService {
     }
   }
 
-  login(username: string, password: string) {
+  login(username: string, password: string, tenantCode: string) {
     return this.http
       .post<LoginResponse>(`${environment.apiBaseUrl}/auth/login`, {
+        username: username.trim(),
+        password,
+        tenantCode: tenantCode.trim().toLowerCase()
+      })
+      .pipe(
+        tap((res) => {
+          localStorage.setItem(this.tokenKey, res.accessToken);
+          localStorage.setItem(this.userKey, JSON.stringify(res.user));
+          this.user.set(res.user);
+        })
+      );
+  }
+
+  platformLogin(username: string, password: string) {
+    return this.http
+      .post<LoginResponse>(`${environment.apiBaseUrl}/platform/auth/login`, {
         username: username.trim(),
         password
       })
@@ -47,7 +65,10 @@ export class AuthService {
       );
   }
 
-  /** Refresh user profile from API; clears session on 401 via interceptor. */
+  isPlatformAdmin(): boolean {
+    return !!this.user()?.roles?.includes('PLATFORM_ADMIN');
+  }
+
   refreshMe() {
     return this.http.get<UserInfo>(`${environment.apiBaseUrl}/auth/me`).pipe(
       tap((user) => {
@@ -114,7 +135,6 @@ export class AuthService {
       if (!payload.exp) {
         return true;
       }
-      // 30s skew so borderline tokens refresh via 401 handler cleanly
       return payload.exp * 1000 <= Date.now() + 30_000;
     } catch {
       return true;

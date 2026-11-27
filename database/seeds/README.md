@@ -1,5 +1,7 @@
 # Seed data
 
-Offline bootstrap creates admin, firm, branch, roles, and permissions automatically.
+Online: Platform Admin provisions each shop (DB + owner + firm/branch).
 
-Additional demo seeds (metals catalogue, HSN, COA) will live here as SQL or Flyway repeatable migrations.
+Test profile uses in-app shop bootstrap (`jewellery.bootstrap.enabled=true`).
+
+Additional demo seeds (metals catalogue, HSN, COA) can live here as SQL or Flyway repeatable migrations.

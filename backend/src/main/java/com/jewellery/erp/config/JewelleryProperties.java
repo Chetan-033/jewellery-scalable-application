@@ -8,7 +8,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = "jewellery")
 public class JewelleryProperties {
 
-    private String edition = "offline";
+    private String edition = "online";
     private final Jwt jwt = new Jwt();
     private final Cors cors = new Cors();
     private final Bootstrap bootstrap = new Bootstrap();

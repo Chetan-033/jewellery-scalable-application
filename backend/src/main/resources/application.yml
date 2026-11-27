@@ -2,7 +2,7 @@ spring:
   application:
     name: jewellery-erp
   profiles:
-    default: offline
+    default: online
   jpa:
     open-in-view: false
     hibernate:
@@ -16,7 +16,6 @@ spring:
     baseline-on-migrate: true
 
 server:
-  # Default away from 8080 to avoid clashing with legacy local PHP stacks.
   port: ${SERVER_PORT:18080}
   error:
     include-message: never
@@ -32,11 +31,25 @@ management:
       show-details: when_authorized
 
 jewellery:
+  edition: online
   jwt:
     secret: ${JWT_SECRET:change-me-to-a-long-random-secret-at-least-32-chars}
     expiry-minutes: ${JWT_EXPIRY_MINUTES:480}
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:4200,http://127.0.0.1:4200}
+  bootstrap:
+    enabled: false
+  tenant:
+    routing-enabled: true
+    db-name-prefix: jewellery_erp_tenant_
+    system-db-name: jewellery_erp_tenant__system
+  storage:
+    root: tenants
+    default-root: data/uploads
+  platform:
+    admin-username: ${PLATFORM_ADMIN_USER:platform}
+    admin-password: ${PLATFORM_ADMIN_PASSWORD:Platform@123}
+    admin-display-name: Platform Admin
   modules:
     enabled:
       - platform

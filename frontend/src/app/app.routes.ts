@@ -17,6 +17,8 @@ import { LoansComponent } from './features/loans/loans.component';
 import { CreditComponent } from './features/credit/credit.component';
 import { SettingsComponent } from './features/settings/settings.component';
 import { ModulePageComponent } from './features/module-page/module-page.component';
+import { PlatformLoginComponent } from './features/platform/platform-login.component';
+import { PlatformTenantsComponent } from './features/platform/platform-tenants.component';
 
 function upcoming(path: string, title: string, description: string, moduleCode: string, features: string[]) {
   return { path, component: ModulePageComponent, data: { title, description, moduleCode, features } };
@@ -29,6 +31,8 @@ export const routes: Routes = [
     redirectTo: () => (inject(AuthService).isAuthenticated() ? '/app/dashboard' : '/login')
   },
   { path: 'login', component: LoginComponent, canActivate: [guestGuard] },
+  { path: 'platform/login', component: PlatformLoginComponent },
+  { path: 'platform/tenants', component: PlatformTenantsComponent },
   {
     path: 'app',
     component: ShellComponent,

@@ -5,8 +5,7 @@
       <p class="eyebrow">Jewellery business platform</p>
       <h1>Jewellery ERP</h1>
       <p class="tagline">
-        Billing, stock, Girvi, job work and accounts — built for Indian jewellery shops,
-        online or fully offline.
+        Billing, stock, Girvi, job work and accounts — built for Indian jewellery shops online.
       </p>
       <ul class="points">
         <li>Retail & wholesale billing with metal weight engine</li>
@@ -22,12 +21,17 @@
         <span class="mark">JE</span>
         <div>
           <strong>Jewellery ERP</strong>
-          <small>{{ edition === 'offline' ? 'Offline shop edition' : 'Online multi-tenant' }}</small>
+          <small>Online multi-tenant</small>
         </div>
       </div>
 
       <h2>Welcome back</h2>
-      <p class="sub">Sign in to open your firm workspace.</p>
+      <p class="sub">Sign in with your shop code to open the workspace.</p>
+
+      <div class="field">
+        <label for="tenantCode">Shop code</label>
+        <input id="tenantCode" name="tenantCode" [(ngModel)]="tenantCode" autocomplete="organization" required />
+      </div>
 
       <div class="field">
         <label for="username">Login ID</label>
@@ -59,9 +63,7 @@
         {{ loading() ? 'Signing in…' : 'Enter workspace' }}
       </button>
 
-      @if (edition === 'offline') {
-        <p class="hint">Offline default: admin / Admin&#64;123 — change after first login.</p>
-      }
+      <p class="hint"><a routerLink="/platform/login">Platform admin</a></p>
     </form>
   </section>
 </div>

@@ -1,4 +1,4 @@
 export const environment = {
-  edition: 'online' as 'online' | 'offline',
+  edition: 'online' as const,
   apiBaseUrl: '/api/v1'
 };

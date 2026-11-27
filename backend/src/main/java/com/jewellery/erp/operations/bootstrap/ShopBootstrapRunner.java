@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,9 +30,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-public class OfflineBootstrapRunner implements ApplicationRunner {
+@Order(10)
+public class ShopBootstrapRunner implements ApplicationRunner {
 
-    private static final Logger log = LoggerFactory.getLogger(OfflineBootstrapRunner.class);
+    private static final Logger log = LoggerFactory.getLogger(ShopBootstrapRunner.class);
 
     private final JewelleryProperties properties;
     private final TenantMetaRepository tenantMetaRepository;
@@ -44,7 +46,7 @@ public class OfflineBootstrapRunner implements ApplicationRunner {
     private final RolePermissionRepository rolePermissionRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public OfflineBootstrapRunner(
+    public ShopBootstrapRunner(
             JewelleryProperties properties,
             TenantMetaRepository tenantMetaRepository,
             BusinessFirmRepository firmRepository,
@@ -74,7 +76,7 @@ public class OfflineBootstrapRunner implements ApplicationRunner {
             return;
         }
         if (tenantMetaRepository.existsByCode(properties.getBootstrap().getTenantCode())) {
-            log.info("Offline bootstrap skipped — tenant already present");
+            log.info("Shop bootstrap skipped — tenant already present");
             return;
         }
 
@@ -102,14 +104,12 @@ public class OfflineBootstrapRunner implements ApplicationRunner {
         branchRepository.save(branch);
 
         Role adminRole = ensureRole("ADMIN", "Administrator");
-        List<String> permissionCodes = List.of(
+        for (String code : List.of(
                 "CUSTOMER_READ", "CUSTOMER_WRITE",
                 "METAL_READ", "METAL_WRITE",
                 "RATE_READ", "RATE_WRITE",
                 "STOCK_READ", "STOCK_WRITE",
-                "ORG_READ"
-        );
-        for (String code : permissionCodes) {
+                "ORG_READ")) {
             Permission permission = ensurePermission(code);
             RolePermission rp = new RolePermission();
             rp.setRoleId(adminRole.getId());
@@ -129,7 +129,7 @@ public class OfflineBootstrapRunner implements ApplicationRunner {
         userRole.setRoleId(adminRole.getId());
         userRoleRepository.save(userRole);
 
-        log.info("Offline bootstrap complete. Login as '{}' / configured password", cfg.getAdminUsername());
+        log.info("Shop bootstrap complete. Login as '{}'", cfg.getAdminUsername());
     }
 
     private Role ensureRole(String code, String name) {

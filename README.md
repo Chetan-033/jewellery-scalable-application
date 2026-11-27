@@ -1,43 +1,40 @@
 # Jewellery ERP
 
-Modern jewellery business platform for India: multi-branch retail/wholesale, inventory, Girvi loans, job work, accounting, GST-oriented reporting, with **online multi-tenant** and **offline Windows packaged** editions.
+Online multi-tenant jewellery ERP for India: masters, inventory, Girvi loans, sales, credit, and platform admin for shop onboarding.
 
-**Stack:** Java 21 · Spring Boot 3 · Angular · MySQL 8.4 · Flyway · Electron (offline launcher)
-
-Reference PHP systems are used only as a **behaviour checklist**. This codebase does not wrap or reuse legacy APIs.
+**Stack:** Java 21 · Spring Boot 3 · Angular · MySQL 8.4 · Flyway
 
 ## Repository layout
 
 | Path | Purpose |
 |------|---------|
 | `backend/` | Spring Boot modular monolith |
-| `frontend/` | Angular ERP UI |
-| `desktop/` | Offline Windows launcher (Electron) |
-| `docs/` | PRD, functional map, ADRs, calculation rules, runbooks |
-| `infra/` | Docker Compose, MySQL init |
-| `database/` | Seed data |
-| `tests/` | Cross-cutting fixtures and e2e notes |
-| `.github/workflows/` | CI |
+| `frontend/` | Angular ERP UI + platform admin |
+| `docs/` | PRD, ADRs, runbooks |
+| `infra/` | Docker Compose MySQL (optional local) |
+| `database/` | Seed notes |
 
 ## Prerequisites
 
-- JDK 21 (Temurin recommended)
-- Node.js 20+ (LTS)
-- MySQL 8.4 (local service or Docker)
-- Maven Wrapper is included (`backend/mvnw`)
+- JDK 21
+- Node.js 20+
+- MySQL 8.4 (local install or Docker)
 
-## Quick start (local / offline profile)
+## Quick start (online)
 
-Offline profile uses a **local H2 file database** under `backend/data/` by default (no MySQL password required). Override with `OFFLINE_JDBC_URL` / MySQL for production-like shops.
+1. Ensure MySQL is running and user/DB exist (see `.env.example`), or from `infra/`:
+   `docker compose up -d mysql`
 
-1. Backend:
+2. Backend:
 
 ```bash
 cd backend
-mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=offline
+mvnw.cmd spring-boot:run
 ```
 
-2. Frontend:
+Default profile is **online**. Platform admin: `platform` / `Platform@123`.
+
+3. Frontend:
 
 ```bash
 cd frontend
@@ -45,30 +42,22 @@ npm ci
 npm start
 ```
 
-Open http://localhost:4200 — API listens on **http://localhost:18080** by default (avoids legacy PHP on 8080). First boot creates admin `admin` / `Admin@123` (change immediately).
+- Shop login: http://localhost:4200/login (shop code + owner user)
+- Platform admin: http://localhost:4200/platform/login
 
-3. Offline desktop (starts API jar + UI window):
-
-```bash
-cd backend && mvnw.cmd -DskipTests package
-cd ../desktop && npm ci && npm start
-```
-
-Optional MySQL (online / shop prefer MySQL): copy `.env.example`, create DBs via `infra/mysql/init/01-databases.sql` or Docker Compose, set `OFFLINE_JDBC_URL` to a MySQL JDBC URL.
+API: http://localhost:18080
 
 ## Profiles
 
 | Profile | Use |
 |---------|-----|
-| `offline` | Single local tenant DB, local files, desktop app |
-| `online` | Platform DB + database-per-tenant placement |
+| `online` (default) | Platform DB + database-per-tenant |
+| `test` | In-memory H2 for automated tests |
 
 ## Documentation
 
-Start at [docs/PRD.md](docs/PRD.md) and [docs/FUNCTIONAL-MAP.md](docs/FUNCTIONAL-MAP.md).
+Start at [docs/PRD.md](docs/PRD.md) and [docs/adr/ADR-002-database-per-tenant.md](docs/adr/ADR-002-database-per-tenant.md).
 
 ## License
 
 Proprietary — all rights reserved.
-
-

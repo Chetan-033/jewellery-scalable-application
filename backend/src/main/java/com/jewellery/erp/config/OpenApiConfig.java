@@ -18,7 +18,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("Jewellery ERP API")
                         .version("v1")
-                        .description("Modern jewellery ERP REST API (online + offline editions)"))
+                        .description("Modern jewellery ERP REST API (online multi-tenant)"))
                 .addSecurityItem(new SecurityRequirement().addList(scheme))
                 .components(new Components().addSecuritySchemes(scheme,
                         new SecurityScheme()

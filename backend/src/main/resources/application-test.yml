@@ -12,10 +12,12 @@ spring:
     enabled: true
 
 jewellery:
-  edition: offline
+  edition: online
   jwt:
     secret: test-secret-key-with-at-least-32-characters!!
     expiry-minutes: 60
+  tenant:
+    routing-enabled: false
   bootstrap:
     enabled: true
     admin-username: admin
